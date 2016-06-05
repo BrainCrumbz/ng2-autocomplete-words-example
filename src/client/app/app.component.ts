@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Observable, Observer, Subject, Subscription } from 'rxjs';
 
 import { AcMatchesComponent } from '../autocomplete/ac-matches.component';
+import { TextRun, findCurrentWord, isTyping } from '../autocomplete/ac-utils';
 import { countryNames } from './countries';
 
 @Component({
@@ -114,52 +115,4 @@ export class AppComponent {
   completions: string[] = countryNames;
 
   minWordLength: number = 2;
-}
-
-interface TextRun {
-  text: string;
-  startIndex: number;
-  endIndex: number;
-}
-
-function isTyping(keyCode: number): boolean {
-  return (
-    keyCode > 47 && keyCode < 58   || // number keys
-    keyCode === 32                 || // spacebar
-    keyCode === 8                  || // backspace
-    keyCode === 46                 || // delete
-    keyCode > 64 && keyCode < 91   || // letter keys
-    keyCode > 95 && keyCode < 112  || // numpad keys
-    keyCode > 185 && keyCode < 193 || // ;=,-./` in order
-    keyCode > 218 && keyCode < 223   // [\]' in order
-  );
-}
-
-function findCurrentWord(fullText: string, currentIndex: number): TextRun[] {
-
-  let findWordsRegex = /\S+/g;
-  let wordResults: TextRun[] = [];
-
-  let regexResult = findWordsRegex.exec(fullText);
-
-  while (regexResult !== null) {
-    const word = regexResult[0];
-    const startIndex = regexResult.index;
-    const endIndex = startIndex + word.length;
-
-    wordResults.push({
-      text: word, startIndex, endIndex,
-    });
-
-    regexResult = findWordsRegex.exec(fullText);
-  }
-
-  wordResults.reverse();
-
-  const wordResult = wordResults.find(wr =>
-    wr.startIndex <= currentIndex && currentIndex <= wr.endIndex);
-
-  return wordResult
-    ? [ wordResult ]
-    : [];
 }
