@@ -85,22 +85,22 @@ export class AppComponent {
     */
 
     const matchingCompletions$ = longEnoughWord$
-      .switchMap(wordResult => {
-        const word = wordResult.text.toLocaleLowerCase();
-        const matchingCompletions = this.completions
-          .filter(completion => completion.toLocaleLowerCase().startsWith(word));
+      .switchMap(wordResult => this.getMatches(wordResult.text));
 
-        return Observable.of(matchingCompletions);
+    matchingCompletions$
+      .merge(notSuitableWord$)
+      .subscribe(completions => {
+        this.matches = completions;
       });
+  }
 
-    matchingCompletions$.subscribe(completions => {
-      this.matches = completions;
-    });
+  getMatches(text: string): Observable<string[]> {
+    const lowerCaseText = text.toLocaleLowerCase();
 
-    notSuitableWord$.subscribe(completions => {
-      console.log('closing, too short');
-      this.matches = completions;
-    });
+    const matchingCompletions = this.completions
+      .filter(completion => completion.toLocaleLowerCase().startsWith(lowerCaseText));
+
+    return Observable.of(matchingCompletions);
   }
 
   onKeyUp(event: KeyboardEvent): void {
