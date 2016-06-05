@@ -1,24 +1,19 @@
 import { Component } from '@angular/core';
 import { Observable, Observer, Subject, Subscription } from 'rxjs';
 
+import { AcMatchesComponent } from '../autocomplete/ac-matches.component';
+
 @Component({
   selector: 'my-app',
   template: `
     <input id="dummyInput" [(ngModel)]="dummyInput" autofocus=""
            type="text" class="form-control" placeholder="Dummy text input"
            (keyup)="onKeyUp($event)">
-    <div class="match-container" *ngIf="matches.length > 0">
-      <ul class="dropdown-menu">
-        <li *ngFor="let match of matches; let index = index"
-            [class.active]="isActive(index)"
-            (mouseenter)="setActive(index)">
-          <a href="#" tabindex="-1" (click)="select(index)">{{match}}</a>
-        </li>
-      </ul>
-    </div>
+    <ac-matches></ac-matches>
   `,
   styles: [require('./app.component.css')],
   directives: [
+    AcMatchesComponent,
   ],
   providers: [
   ],
@@ -27,20 +22,39 @@ export class AppComponent {
 
   constructor() {
     this.matches = [];
-    this.keyUpSubject = new Subject<any>();
+    this.keyUpSubject = new Subject<KeyboardEvent>();
 
-    const currentState$ = this.keyUpSubject.map(elem => {
-      const { value, selectionStart } = elem;
+    const escPressed$ = this.keyUpSubject
+      .filter(event => event.keyCode === 27)
+      .do(event => event.preventDefault());
 
-      return <TextRun>{
-        text: value,
-        startIndex: selectionStart,
-        endIndex: -1,
-      };
-    });
+    const arrowUpPressed$ = this.keyUpSubject
+      .filter(event => event.keyCode === 38)
+      .do(event => event.preventDefault());
 
-    currentState$.subscribe(state => {
-      const { text: fullText, startIndex: selectionStart } = state;
+    const arrowDownPressed$ = this.keyUpSubject
+      .filter(event => event.keyCode === 40)
+      .do(event => event.preventDefault());
+
+    const enterPressed$ = this.keyUpSubject
+      .filter(event => event.keyCode === 13)
+      .do(event => event.preventDefault());
+
+    const currentTyping$ = this.keyUpSubject
+      .debounceTime(200)
+      .filter(event => isTyping(event.keyCode))
+      .map(event => {
+        const { value, selectionStart } = (event.srcElement as HTMLInputElement);
+
+        return <TextRun>{
+          text: value,
+          startIndex: selectionStart,
+          endIndex: -1,
+        };
+      });
+
+    currentTyping$.subscribe(currentState => {
+      const { text: fullText, startIndex: selectionStart } = currentState;
 
       const result: TextRun[] = findCurrentWord(fullText, selectionStart);
 
@@ -52,30 +66,13 @@ export class AppComponent {
         console.log('(%d) %s: no current word', selectionStart, fullText);
       }
     });
-
-    /*
-    this.keyUpSubject.subscribe(elem => {
-      const { value, selectionStart } = elem;
-
-      const result: TextRun[] = findCurrentWord(value, selectionStart);
-
-      if (result.length) {
-        const { text, startIndex, endIndex } = result[0];
-
-        console.log('(%d) %s: (%d, %d) %s', selectionStart, value, startIndex, endIndex, text);
-      } else {
-        console.log('(%d) %s: no current word', selectionStart, value);
-      }
-    });
-    */
   }
 
-  onKeyUp(event: any): void {
-    //console.dir(event);
-    this.keyUpSubject.next(event.srcElement);
+  onKeyUp(event: KeyboardEvent): void {
+    this.keyUpSubject.next(event);
   }
 
-  keyUpSubject: Subject<any>;
+  keyUpSubject: Subject<KeyboardEvent>;
 
   matches: string[];
 }
@@ -86,12 +83,24 @@ interface TextRun {
   endIndex: number;
 }
 
+function isTyping(keyCode: number): boolean {
+  return (
+    keyCode > 47 && keyCode < 58   || // number keys
+    keyCode === 32                 || // spacebar
+    //keyCode === 13                 || // return key
+    keyCode > 64 && keyCode < 91   || // letter keys
+    keyCode > 95 && keyCode < 112  || // numpad keys
+    keyCode > 185 && keyCode < 193 || // ;=,-./` in order
+    keyCode > 218 && keyCode < 223   // [\]' in order
+  );
+}
+
 function findCurrentWord(fullText: string, currentIndex: number): TextRun[] {
 
-  let findWordsRegex = /(\S+)/g;
+  let findWordsRegex = /\S+/g;
+  let wordResults: TextRun[] = [];
 
   let regexResult = findWordsRegex.exec(fullText);
-  let wordResults: TextRun[] = [];
 
   while (regexResult !== null) {
     const word = regexResult[0];
