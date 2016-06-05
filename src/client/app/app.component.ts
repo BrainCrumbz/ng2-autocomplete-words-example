@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Observable, Observer, Subject, Subscription } from 'rxjs';
 
 import { AcMatchesComponent } from '../autocomplete/ac-matches.component';
+import { AcInputDriver } from '../autocomplete/ac-input-driver';
 import { TextRun, findCurrentWord, isTyping } from '../autocomplete/ac-utils';
 import { countryNames } from './countries';
 
@@ -12,7 +13,8 @@ import { countryNames } from './countries';
            type="text" class="form-control" placeholder="Autocomplete on country names"
            aria-haspopup="true" aria-controls="dummyInputMatches"
            (keyup)="onKeyUp($event)">
-    <ac-matches id="dummyInputMatches" [matches]="matches" (select)="onMatchSelect($event)"></ac-matches>
+    <ac-matches id="dummyInputMatches" [matches]="matches"
+                (select)="onMatchSelect($event)"></ac-matches>
   `,
   styles: [require('./app.component.css')],
   directives: [
@@ -51,55 +53,21 @@ export class AppComponent {
         && !event.ctrlKey && !event.key)
       .do(event => event.preventDefault());
 
-    const currentTyping$ = this.keyUpSubject
-      .debounceTime(this.debounceMs)
-      .filter(event => isTyping(event.keyCode))
-      .map(event => {
-        const { value, selectionStart } = (event.srcElement as HTMLInputElement);
-
-        return <TextRun>{
-          text: value,
-          startIndex: selectionStart,
-          endIndex: -1,
-        };
+    const inputDriver = new AcInputDriver(
+      this.keyUpSubject,
+      this.getMatches.bind(this),
+      {
+        debounceMs: this.debounceMs,
+        minWordLength: this.minWordLength,
       });
 
-    const typedWord$ = currentTyping$
-      .map(currentTyping => {
-        const { text: fullText, startIndex: selectionStart } = currentTyping;
-
-        const wordResults: TextRun[] = findCurrentWord(fullText, selectionStart);
-
-        return wordResults;
-      })
-      .share();
-
-    const longEnoughWord$ = typedWord$
-      .filter(wordResults => wordResults.length > 0)
-      .map(wordResults => wordResults[0])
-      .filter(wordResult => wordResult.text.length >= this.minWordLength);
-
-    const emptyMatches = [];
-
-    const notSuitableWord$ = typedWord$
-      .filter(wordResults => wordResults.length === 0
-        || wordResults[0].text.length < this.minWordLength)
-      .map(_ => emptyMatches);
-
-    const matchingCompletions$ = longEnoughWord$
-      .switchMap(wordResult => this
-        .getMatches(wordResult.text)
-        .catch(_ => Observable.of([]))
-      );
-
-    matchingCompletions$
-      .merge(notSuitableWord$)
+    inputDriver.matches$
       .subscribe(completions => {
         this.matches = completions;
       });
 
     const inputText$ = this.matchSelectedSubject
-      .withLatestFrom(longEnoughWord$, (selected, typedWord) => {
+      .withLatestFrom(inputDriver.words$, (selected, typedWord) => {
         const { text, startIndex, endIndex } = typedWord;
 
         const newText = this.dummyText.slice(0, startIndex)

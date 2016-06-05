@@ -6,17 +6,23 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
     <div class="dropdown"
          *ngIf="internalMatches.length > 0"
          (mouseleave)="onMouseLeaveContainer()">
-      <ul class="dropdown-menu" style="display: block;">
+      <ul class="dropdown-menu" style="" role="listbox">
         <li class="dropdown-item"
             *ngFor="let match of internalMatches; let index = index"
             [class.active]="isActiveItem(index)"
             (mouseenter)="onMouseEnterItem(index)">
-          <a tabindex="-1" (click)="onSelectItem($event, index)">{{match}}</a>
+          <a tabindex="-1" (click)="onSelectItem($event, index)" role="option">
+            {{match}}
+          </a>
         </li>
       </ul>
     </div>
   `,
-  styles: [/*require('./ac-matches.component.css')*/],
+  styles: [`
+    .dropdown-menu {
+      display: block;
+    }
+  `],
   directives: [
   ],
   providers: [
