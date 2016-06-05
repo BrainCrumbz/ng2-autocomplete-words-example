@@ -68,9 +68,23 @@ export class AppComponent {
     const longEnoughWord$ = typedWord$
       .filter(wordResult => wordResult.text.length >= this.minWordLength);
 
+    /*
     longEnoughWord$.subscribe(typedWord => {
       const { text, startIndex, endIndex } = typedWord;
       console.log('(%d, %d) %s', startIndex, endIndex, text);
+    });
+    */
+
+    const matchingCompletions$ = longEnoughWord$
+      .map(wordResult => {
+        const word = wordResult.text.toLocaleLowerCase();
+        const matchingCompletions = this.completions
+          .filter(completion => completion.toLocaleLowerCase().startsWith(word));
+        return matchingCompletions;
+      });
+
+    matchingCompletions$.subscribe(completions => {
+      console.log(completions);
     });
   }
 
