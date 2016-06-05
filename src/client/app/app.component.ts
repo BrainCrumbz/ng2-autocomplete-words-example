@@ -53,18 +53,20 @@ export class AppComponent {
         };
       });
 
-    currentTyping$.subscribe(currentState => {
-      const { text: fullText, startIndex: selectionStart } = currentState;
+    const typedWord$ = currentTyping$
+      .map(currentTyping => {
+        const { text: fullText, startIndex: selectionStart } = currentTyping;
 
-      const result: TextRun[] = findCurrentWord(fullText, selectionStart);
+        const wordResult: TextRun[] = findCurrentWord(fullText, selectionStart);
 
-      if (result.length) {
-        const { text: word, startIndex, endIndex } = result[0];
+        return wordResult;
+      })
+      .filter(wordResult => wordResult.length > 0)
+      .map(wordResult => wordResult[0]);
 
-        console.log('(%d) %s: (%d, %d) %s', selectionStart, fullText, startIndex, endIndex, word);
-      } else {
-        console.log('(%d) %s: no current word', selectionStart, fullText);
-      }
+    typedWord$.subscribe(typedWord => {
+      const { text: word, startIndex, endIndex } = typedWord;
+      console.log('(%d, %d) %s', startIndex, endIndex, word);
     });
   }
 
