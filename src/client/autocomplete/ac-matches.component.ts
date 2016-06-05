@@ -3,7 +3,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 @Component({
   selector: 'ac-matches',
   template: `
-    <div class="dropdown"
+    <div class="dropdown" [attr.id]="id"
          *ngIf="internalMatches.length > 0"
          (mouseleave)="onMouseLeaveContainer()">
       <ul class="dropdown-menu" style="" role="listbox">
@@ -33,6 +33,8 @@ export class AcMatchesComponent {
   constructor() {
     this.matches = [];
   }
+
+  @Input() id: string;
 
   @Input() set matches(value: string[]) {
     this.internalMatches = value;

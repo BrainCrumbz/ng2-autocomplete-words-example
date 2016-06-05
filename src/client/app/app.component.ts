@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, OnDestroy, DynamicComponentLoader, ViewContainerRef, ComponentRef
+  Component, AfterViewInit, OnDestroy, DynamicComponentLoader, ViewContainerRef, ComponentRef
 } from '@angular/core';
 import { Observable, Observer, Subject, Subscription } from 'rxjs';
 
@@ -14,10 +14,6 @@ import { countryNames } from './countries';
            type="text" class="form-control" placeholder="Autocomplete on country names"
            aria-haspopup="true" aria-controls="dummyInputMatches"
            (keyup)="onKeyUp($event)">
-    <!--
-    <ac-matches id="dummyInputMatches" [matches]="matches"
-                (select)="onMatchSelect($event)"></ac-matches>
-    -->
   `,
   styles: [require('./app.component.css')],
   directives: [
@@ -26,7 +22,7 @@ import { countryNames } from './countries';
   providers: [
   ],
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent implements AfterViewInit, OnDestroy {
 
   dummyText: string = '';
 
@@ -81,12 +77,13 @@ export class AppComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnInit(): void {
+  ngAfterViewInit(): void {
     this.componentLoadPromise = this.componentLoader
       .loadNextToLocation(AcMatchesComponent, this.viewContainerRef)
       .then(componentRef => {
         this.matchesComponent = componentRef.instance;
 
+        this.matchesComponent.id = this.matchesComponentId
         this.matchesComponent.matches = [];
 
         this.setMatches = value => {
@@ -127,11 +124,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.keyUpSubject.next(event);
   }
 
-  /*
-  onMatchSelect(match: string): void {
-    this.matchSelectedSubject.next(match);
-  }
-  */
+  matchesComponentId: string = "dummyInputMatches";
 
   completions: string[] = countryNames;
 
