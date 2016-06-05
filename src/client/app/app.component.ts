@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Observable, Observer, Subject, Subscription } from 'rxjs';
 
 import { AcMatchesComponent } from '../autocomplete/ac-matches.component';
+import { countryNames } from './countries';
 
 @Component({
   selector: 'my-app',
@@ -64,9 +65,12 @@ export class AppComponent {
       .filter(wordResult => wordResult.length > 0)
       .map(wordResult => wordResult[0]);
 
-    typedWord$.subscribe(typedWord => {
-      const { text: word, startIndex, endIndex } = typedWord;
-      console.log('(%d, %d) %s', startIndex, endIndex, word);
+    const longEnoughWord$ = typedWord$
+      .filter(wordResult => wordResult.text.length >= this.minWordLength);
+
+    longEnoughWord$.subscribe(typedWord => {
+      const { text, startIndex, endIndex } = typedWord;
+      console.log('(%d, %d) %s', startIndex, endIndex, text);
     });
   }
 
@@ -77,6 +81,10 @@ export class AppComponent {
   keyUpSubject: Subject<KeyboardEvent>;
 
   matches: string[];
+
+  completions: string[] = countryNames;
+
+  minWordLength: number = 2;
 }
 
 interface TextRun {
