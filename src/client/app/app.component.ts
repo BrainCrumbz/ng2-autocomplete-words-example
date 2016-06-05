@@ -8,8 +8,8 @@ import { countryNames } from './countries';
 @Component({
   selector: 'my-app',
   template: `
-    <input id="dummyInput" [(ngModel)]="dummyInput" autofocus=""
-           type="text" class="form-control" placeholder="Dummy text input"
+    <input id="dummyInput" [(ngModel)]="dummyText" autofocus=""
+           type="text" class="form-control" placeholder="Autocomplete on country names"
            (keyup)="onKeyUp($event)">
     <ac-matches [matches]="matches" (select)="onMatchSelect($event)"></ac-matches>
   `,
@@ -22,9 +22,12 @@ import { countryNames } from './countries';
 })
 export class AppComponent {
 
+  dummyText: string = '';
+
   constructor() {
     this.matches = [];
     this.keyUpSubject = new Subject<KeyboardEvent>();
+    this.matchSelectedSubject = new Subject<string>();
 
     const escPressed$ = this.keyUpSubject
       .filter(event => event.keyCode === 27)
@@ -82,14 +85,6 @@ export class AppComponent {
         || wordResults[0].text.length < this.minWordLength)
       .map(_ => emptyMatches);
 
-    /* This will be needed
-
-    longEnoughWord$.subscribe(typedWord => {
-      const { text, startIndex, endIndex } = typedWord;
-      console.log('(%d, %d) %s', startIndex, endIndex, text);
-    });
-    */
-
     const matchingCompletions$ = longEnoughWord$
       .switchMap(wordResult => this
         .getMatches(wordResult.text)
@@ -101,6 +96,22 @@ export class AppComponent {
       .subscribe(completions => {
         this.matches = completions;
       });
+
+    const inputText$ = this.matchSelectedSubject
+      .withLatestFrom(longEnoughWord$, (selected, typedWord) => {
+        const { text, startIndex, endIndex } = typedWord;
+
+        const newText = this.dummyText.slice(0, startIndex)
+          + selected + this.dummyText.slice(endIndex);
+
+        return newText;
+      });
+
+    inputText$.subscribe(text => {
+      this.dummyText = text;
+
+      this.matches = [];
+    });
   }
 
   getMatches(text: string): Observable<string[]> {
@@ -116,8 +127,8 @@ export class AppComponent {
     this.keyUpSubject.next(event);
   }
 
-  onMatchSelect(index: number): void {
-    console.log('onMatchSelect #%d', index);
+  onMatchSelect(match: string): void {
+    this.matchSelectedSubject.next(match);
   }
 
   keyUpSubject: Subject<KeyboardEvent>;
@@ -125,6 +136,8 @@ export class AppComponent {
   matches: string[];
 
   completions: string[] = countryNames;
+
+  matchSelectedSubject: Subject<string>;
 
   minWordLength: number = 2;
 

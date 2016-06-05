@@ -49,7 +49,9 @@ export class AcMatchesComponent {
   }
 
   onSelectItem(index: number): void {
-    this.selectItem.next(index);
+    const match = this.internalMatches[index];
+
+    this.selectItem.next(match);
   }
 
   onMouseLeaveContainer(): void {
