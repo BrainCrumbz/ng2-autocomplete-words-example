@@ -3,10 +3,10 @@ import { Component, Input } from '@angular/core';
 @Component({
   selector: 'ac-matches',
   template: `
-    <div class="match-container" *ngIf="matches.length > 0"
+    <div class="match-container" *ngIf="internalMatches.length > 0"
          (mouseleave)="onMouseLeave()">
       <ul class="dropdown-menu" style="display: block;">
-        <li *ngFor="let match of matches; let index = index"
+        <li *ngFor="let match of internalMatches; let index = index"
             [class.active]="isActive(index)"
             (mouseenter)="setActive(index)">
           <a href="#" tabindex="-1" (click)="select(index)">{{match}}</a>
@@ -35,7 +35,7 @@ export class AcMatchesComponent {
   }
 
   get matches(): string[] {
-    return this.internalMatches;
+    throw new Error('\'matches\' property is write-only, cannot be read');
   }
 
   isActive(index: number): boolean {

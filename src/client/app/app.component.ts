@@ -10,7 +10,7 @@ import { countryNames } from './countries';
     <input id="dummyInput" [(ngModel)]="dummyInput" autofocus=""
            type="text" class="form-control" placeholder="Dummy text input"
            (keyup)="onKeyUp($event)">
-    <ac-matches></ac-matches>
+    <ac-matches [matches]="matches"></ac-matches>
   `,
   styles: [require('./app.component.css')],
   directives: [
@@ -58,17 +58,26 @@ export class AppComponent {
       .map(currentTyping => {
         const { text: fullText, startIndex: selectionStart } = currentTyping;
 
-        const wordResult: TextRun[] = findCurrentWord(fullText, selectionStart);
+        const wordResults: TextRun[] = findCurrentWord(fullText, selectionStart);
 
-        return wordResult;
+        return wordResults;
       })
-      .filter(wordResult => wordResult.length > 0)
-      .map(wordResult => wordResult[0]);
+      .share();
 
     const longEnoughWord$ = typedWord$
+      .filter(wordResults => wordResults.length > 0)
+      .map(wordResults => wordResults[0])
       .filter(wordResult => wordResult.text.length >= this.minWordLength);
 
-    /*
+    const emptyMatches = [];
+
+    const notSuitableWord$ = typedWord$
+      .filter(wordResults => wordResults.length === 0
+        || wordResults[0].text.length < this.minWordLength)
+      .map(_ => emptyMatches);
+
+    /* This will be needed
+
     longEnoughWord$.subscribe(typedWord => {
       const { text, startIndex, endIndex } = typedWord;
       console.log('(%d, %d) %s', startIndex, endIndex, text);
@@ -76,15 +85,21 @@ export class AppComponent {
     */
 
     const matchingCompletions$ = longEnoughWord$
-      .map(wordResult => {
+      .switchMap(wordResult => {
         const word = wordResult.text.toLocaleLowerCase();
         const matchingCompletions = this.completions
           .filter(completion => completion.toLocaleLowerCase().startsWith(word));
-        return matchingCompletions;
+
+        return Observable.of(matchingCompletions);
       });
 
     matchingCompletions$.subscribe(completions => {
-      console.log(completions);
+      this.matches = completions;
+    });
+
+    notSuitableWord$.subscribe(completions => {
+      console.log('closing, too short');
+      this.matches = completions;
     });
   }
 
@@ -111,7 +126,8 @@ function isTyping(keyCode: number): boolean {
   return (
     keyCode > 47 && keyCode < 58   || // number keys
     keyCode === 32                 || // spacebar
-    //keyCode === 13                 || // return key
+    keyCode === 8                  || // backspace
+    keyCode === 46                 || // delete
     keyCode > 64 && keyCode < 91   || // letter keys
     keyCode > 95 && keyCode < 112  || // numpad keys
     keyCode > 185 && keyCode < 193 || // ;=,-./` in order
