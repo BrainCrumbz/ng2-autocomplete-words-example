@@ -1,4 +1,6 @@
-import { Component } from '@angular/core';
+import {
+  Component, OnInit, OnDestroy, DynamicComponentLoader, ViewContainerRef, ComponentRef
+} from '@angular/core';
 import { Observable, Observer, Subject, Subscription } from 'rxjs';
 
 import { AcMatchesComponent } from '../autocomplete/ac-matches.component';
@@ -12,8 +14,10 @@ import { countryNames } from './countries';
            type="text" class="form-control" placeholder="Autocomplete on country names"
            aria-haspopup="true" aria-controls="dummyInputMatches"
            (keyup)="onKeyUp($event)">
+    <!--
     <ac-matches id="dummyInputMatches" [matches]="matches"
                 (select)="onMatchSelect($event)"></ac-matches>
+    -->
   `,
   styles: [require('./app.component.css')],
   directives: [
@@ -22,12 +26,16 @@ import { countryNames } from './countries';
   providers: [
   ],
 })
-export class AppComponent {
+export class AppComponent implements OnInit, OnDestroy {
 
   dummyText: string = '';
 
-  constructor() {
-    this.matches = [];
+  constructor(
+    private componentLoader: DynamicComponentLoader,
+    private viewContainerRef: ViewContainerRef) {
+
+    this.setMatches = _ => {};
+
     this.keyUpSubject = new Subject<KeyboardEvent>();
     this.matchSelectedSubject = new Subject<string>();
 
@@ -63,14 +71,47 @@ export class AppComponent {
 
     inputDriver.matches$
       .subscribe(completions => {
-        this.matches = completions;
+        this.setMatches(completions);
       });
 
     inputDriver.text$.subscribe(text => {
       this.dummyText = text;
 
-      this.matches = [];
+      this.setMatches([]);
     });
+  }
+
+  ngOnInit(): void {
+    this.componentLoadPromise = this.componentLoader
+      .loadNextToLocation(AcMatchesComponent, this.viewContainerRef)
+      .then(componentRef => {
+        this.matchesComponent = componentRef.instance;
+
+        this.matchesComponent.matches = [];
+
+        this.setMatches = value => {
+          this.matchesComponent.matches = value;
+        };
+
+        this.matchesComponent.selectItem
+          .subscribe((match: string) => {
+            this.matchSelectedSubject.next(match);
+          });
+
+        return componentRef;
+      });
+  }
+
+  ngOnDestroy(): void {
+    if (this.componentLoadPromise) {
+      this.componentLoadPromise.then(componentRef => {
+        this.setMatches = _ => {};
+        this.matchesComponent = void 0;
+        this.componentLoadPromise = void 0;
+
+        componentRef.destroy();
+      });
+    }
   }
 
   getMatches(text: string): Observable<string[]> {
@@ -86,19 +127,25 @@ export class AppComponent {
     this.keyUpSubject.next(event);
   }
 
+  /*
   onMatchSelect(match: string): void {
     this.matchSelectedSubject.next(match);
   }
-
-  keyUpSubject: Subject<KeyboardEvent>;
-
-  matches: string[];
+  */
 
   completions: string[] = countryNames;
-
-  matchSelectedSubject: Subject<string>;
 
   minWordLength: number = 2;
 
   debounceMs: number = 200;
+
+  private setMatches: (matches: string[]) => void;
+
+  private componentLoadPromise: Promise<ComponentRef<AcMatchesComponent>>;
+
+  private matchesComponent: AcMatchesComponent;
+
+  private keyUpSubject: Subject<KeyboardEvent>;
+
+  private matchSelectedSubject: Subject<string>;
 }
