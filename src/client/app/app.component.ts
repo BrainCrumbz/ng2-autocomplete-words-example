@@ -3,7 +3,6 @@ import { Observable, Observer, Subject, Subscription } from 'rxjs';
 
 import { AcMatchesComponent } from '../autocomplete/ac-matches.component';
 import { AcInputDriver } from '../autocomplete/ac-input-driver';
-import { TextRun, findCurrentWord, isTyping } from '../autocomplete/ac-utils';
 import { countryNames } from './countries';
 
 @Component({
@@ -55,6 +54,7 @@ export class AppComponent {
 
     const inputDriver = new AcInputDriver(
       this.keyUpSubject,
+      this.matchSelectedSubject,
       this.getMatches.bind(this),
       {
         debounceMs: this.debounceMs,
@@ -66,17 +66,7 @@ export class AppComponent {
         this.matches = completions;
       });
 
-    const inputText$ = this.matchSelectedSubject
-      .withLatestFrom(inputDriver.words$, (selected, typedWord) => {
-        const { text, startIndex, endIndex } = typedWord;
-
-        const newText = this.dummyText.slice(0, startIndex)
-          + selected + this.dummyText.slice(endIndex);
-
-        return newText;
-      });
-
-    inputText$.subscribe(text => {
+    inputDriver.text$.subscribe(text => {
       this.dummyText = text;
 
       this.matches = [];

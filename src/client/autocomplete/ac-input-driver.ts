@@ -10,25 +10,15 @@ export interface InputDriverOptions {
 export class AcInputDriver {
   constructor(
     keyUp$: Observable<KeyboardEvent>,
+    selectedMatch$: Observable<string>,
     getMatches: (text: string) => Observable<string[]>,
     opts: InputDriverOptions) {
 
-    const currentTyping$ = keyUp$
+    const typedWord$ = keyUp$
       .debounceTime(opts.debounceMs)
       .filter(event => isTyping(event.keyCode))
       .map(event => {
-        const { value, selectionStart } = (event.srcElement as HTMLInputElement);
-
-        return <TextRun>{
-          text: value,
-          startIndex: selectionStart,
-          endIndex: -1,
-        };
-      });
-
-    const typedWord$ = currentTyping$
-      .map(currentTyping => {
-        const { text: fullText, startIndex: selectionStart } = currentTyping;
+        const { value: fullText, selectionStart } = (event.srcElement as HTMLInputElement);
 
         const wordResults: TextRun[] = findCurrentWord(fullText, selectionStart);
 
@@ -53,13 +43,21 @@ export class AcInputDriver {
         .catch(_ => Observable.of([]))
       );
 
-    this.words$ = longEnoughWord$;
-
     this.matches$ = matchingCompletions$
       .merge(notSuitableWord$);
+
+    this.text$ = selectedMatch$
+      .withLatestFrom(longEnoughWord$, (selected, typedWord) => {
+        const { fullText, text, startIndex, endIndex } = typedWord;
+
+        const newText = fullText.slice(0, startIndex)
+          + selected + fullText.slice(endIndex);
+
+        return newText;
+      });
   }
 
-  words$: Observable<TextRun>;
-
   matches$: Observable<string[]>;
+
+  text$: Observable<string>;
 }

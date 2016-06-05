@@ -1,4 +1,5 @@
 export interface TextRun {
+  fullText: string;
   text: string;
   startIndex: number;
   endIndex: number;
@@ -30,7 +31,7 @@ export function findCurrentWord(fullText: string, currentIndex: number): TextRun
     const endIndex = startIndex + word.length;
 
     wordResults.push({
-      text: word, startIndex, endIndex,
+      fullText, text: word, startIndex, endIndex,
     });
 
     regexResult = findWordsRegex.exec(fullText);
