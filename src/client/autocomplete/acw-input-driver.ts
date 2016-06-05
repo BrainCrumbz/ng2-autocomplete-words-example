@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 
-import { TextRun, findCurrentWord, isTyping } from '../autocomplete/ac-utils';
+import { TextRun, findCurrentWord, isTyping } from '../autocomplete/acw-utils';
 
 export interface InputDriverOptions {
   debounceMs: number;

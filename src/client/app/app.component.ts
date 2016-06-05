@@ -3,8 +3,8 @@ import {
 } from '@angular/core';
 import { Observable, Observer, Subject, Subscription } from 'rxjs';
 
-import { AcMatchesComponent } from '../autocomplete/ac-matches.component';
-import { AcInputDriver } from '../autocomplete/ac-input-driver';
+import { AcMatchesComponent } from '../autocomplete/acw-matches.component';
+import { AcInputDriver } from '../autocomplete/acw-input-driver';
 import { countryNames } from './countries';
 
 @Component({
@@ -83,7 +83,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
       .then(componentRef => {
         this.matchesComponent = componentRef.instance;
 
-        this.matchesComponent.id = this.matchesComponentId
+        this.matchesComponent.id = this.matchesComponentId;
         this.matchesComponent.matches = [];
 
         this.setMatches = value => {
@@ -124,7 +124,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     this.keyUpSubject.next(event);
   }
 
-  matchesComponentId: string = "dummyInputMatches";
+  matchesComponentId: string = 'dummyInputMatches';
 
   completions: string[] = countryNames;
 

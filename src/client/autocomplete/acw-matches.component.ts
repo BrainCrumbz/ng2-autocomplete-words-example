@@ -23,10 +23,6 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
       display: block;
     }
   `],
-  directives: [
-  ],
-  providers: [
-  ],
 })
 export class AcMatchesComponent {
 
