@@ -3,13 +3,15 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 @Component({
   selector: 'ac-matches',
   template: `
-    <div class="match-container" *ngIf="internalMatches.length > 0"
+    <div class="dropdown"
+         *ngIf="internalMatches.length > 0"
          (mouseleave)="onMouseLeaveContainer()">
       <ul class="dropdown-menu" style="display: block;">
-        <li class="dropdown-item" *ngFor="let match of internalMatches; let index = index"
+        <li class="dropdown-item"
+            *ngFor="let match of internalMatches; let index = index"
             [class.active]="isActiveItem(index)"
             (mouseenter)="onMouseEnterItem(index)">
-          <a tabindex="-1" (click)="onSelectItem(index)">{{match}}</a>
+          <a tabindex="-1" (click)="onSelectItem($event, index)">{{match}}</a>
         </li>
       </ul>
     </div>
@@ -48,10 +50,12 @@ export class AcMatchesComponent {
     this.activeIndex = index;
   }
 
-  onSelectItem(index: number): void {
+  onSelectItem(event: Event, index: number): void {
     const match = this.internalMatches[index];
 
     this.selectItem.next(match);
+
+    event.preventDefault();
   }
 
   onMouseLeaveContainer(): void {

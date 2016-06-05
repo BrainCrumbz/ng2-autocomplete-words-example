@@ -10,8 +10,9 @@ import { countryNames } from './countries';
   template: `
     <input id="dummyInput" [(ngModel)]="dummyText" autofocus=""
            type="text" class="form-control" placeholder="Autocomplete on country names"
+           aria-haspopup="true" aria-controls="dummyInputMatches"
            (keyup)="onKeyUp($event)">
-    <ac-matches [matches]="matches" (select)="onMatchSelect($event)"></ac-matches>
+    <ac-matches id="dummyInputMatches" [matches]="matches" (select)="onMatchSelect($event)"></ac-matches>
   `,
   styles: [require('./app.component.css')],
   directives: [
