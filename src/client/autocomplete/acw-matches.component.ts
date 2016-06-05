@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 
 @Component({
-  selector: 'ac-matches',
+  selector: 'acw-matches',
   template: `
     <div class="dropdown" [attr.id]="id"
          *ngIf="internalMatches.length > 0"
@@ -24,7 +24,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
     }
   `],
 })
-export class AcMatchesComponent {
+export class AcwMatchesComponent {
 
   constructor() {
     this.matches = [];

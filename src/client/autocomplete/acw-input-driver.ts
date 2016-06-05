@@ -7,7 +7,7 @@ export interface InputDriverOptions {
   minWordLength: number;
 }
 
-export class AcInputDriver {
+export class AcwInputDriver {
   constructor(
     keyUp$: Observable<KeyboardEvent>,
     selectedMatch$: Observable<string>,

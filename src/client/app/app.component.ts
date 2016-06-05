@@ -3,8 +3,8 @@ import {
 } from '@angular/core';
 import { Observable, Observer, Subject, Subscription } from 'rxjs';
 
-import { AcMatchesComponent } from '../autocomplete/acw-matches.component';
-import { AcInputDriver } from '../autocomplete/acw-input-driver';
+import { AcwMatchesComponent } from '../autocomplete/acw-matches.component';
+import { AcwInputDriver } from '../autocomplete/acw-input-driver';
 import { countryNames } from './countries';
 
 @Component({
@@ -17,7 +17,7 @@ import { countryNames } from './countries';
   `,
   styles: [require('./app.component.css')],
   directives: [
-    AcMatchesComponent,
+    AcwMatchesComponent,
   ],
   providers: [
   ],
@@ -56,7 +56,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
         && !event.ctrlKey && !event.key)
       .do(event => event.preventDefault());
 
-    const inputDriver = new AcInputDriver(
+    const inputDriver = new AcwInputDriver(
       this.keyUpSubject,
       this.matchSelectedSubject,
       this.getMatches.bind(this),
@@ -79,7 +79,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.componentLoadPromise = this.componentLoader
-      .loadNextToLocation(AcMatchesComponent, this.viewContainerRef)
+      .loadNextToLocation(AcwMatchesComponent, this.viewContainerRef)
       .then(componentRef => {
         this.matchesComponent = componentRef.instance;
 
@@ -134,9 +134,9 @@ export class AppComponent implements AfterViewInit, OnDestroy {
 
   private setMatches: (matches: string[]) => void;
 
-  private componentLoadPromise: Promise<ComponentRef<AcMatchesComponent>>;
+  private componentLoadPromise: Promise<ComponentRef<AcwMatchesComponent>>;
 
-  private matchesComponent: AcMatchesComponent;
+  private matchesComponent: AcwMatchesComponent;
 
   private keyUpSubject: Subject<KeyboardEvent>;
 
