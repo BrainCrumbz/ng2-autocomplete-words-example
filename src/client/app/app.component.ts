@@ -11,7 +11,7 @@ import { countryNames } from './countries';
     <input id="dummyInput" [(ngModel)]="dummyInput" autofocus=""
            type="text" class="form-control" placeholder="Dummy text input"
            (keyup)="onKeyUp($event)">
-    <ac-matches [matches]="matches"></ac-matches>
+    <ac-matches [matches]="matches" (select)="onMatchSelect($event)"></ac-matches>
   `,
   styles: [require('./app.component.css')],
   directives: [
@@ -42,8 +42,13 @@ export class AppComponent {
       .filter(event => event.keyCode === 13)
       .do(event => event.preventDefault());
 
+    const tabPressed$ = this.keyUpSubject
+      .filter(event => event.keyCode === 9 && !event.shiftKey
+        && !event.ctrlKey && !event.key)
+      .do(event => event.preventDefault());
+
     const currentTyping$ = this.keyUpSubject
-      .debounceTime(200)
+      .debounceTime(this.debounceMs)
       .filter(event => isTyping(event.keyCode))
       .map(event => {
         const { value, selectionStart } = (event.srcElement as HTMLInputElement);
@@ -86,7 +91,10 @@ export class AppComponent {
     */
 
     const matchingCompletions$ = longEnoughWord$
-      .switchMap(wordResult => this.getMatches(wordResult.text));
+      .switchMap(wordResult => this
+        .getMatches(wordResult.text)
+        .catch(_ => Observable.of([]))
+      );
 
     matchingCompletions$
       .merge(notSuitableWord$)
@@ -108,6 +116,10 @@ export class AppComponent {
     this.keyUpSubject.next(event);
   }
 
+  onMatchSelect(index: number): void {
+    console.log('onMatchSelect #%d', index);
+  }
+
   keyUpSubject: Subject<KeyboardEvent>;
 
   matches: string[];
@@ -115,4 +127,6 @@ export class AppComponent {
   completions: string[] = countryNames;
 
   minWordLength: number = 2;
+
+  debounceMs: number = 200;
 }

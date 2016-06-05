@@ -1,15 +1,15 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 
 @Component({
   selector: 'ac-matches',
   template: `
     <div class="match-container" *ngIf="internalMatches.length > 0"
-         (mouseleave)="onMouseLeave()">
+         (mouseleave)="onMouseLeaveContainer()">
       <ul class="dropdown-menu" style="display: block;">
-        <li *ngFor="let match of internalMatches; let index = index"
-            [class.active]="isActive(index)"
-            (mouseenter)="setActive(index)">
-          <a href="#" tabindex="-1" (click)="select(index)">{{match}}</a>
+        <li class="dropdown-item" *ngFor="let match of internalMatches; let index = index"
+            [class.active]="isActiveItem(index)"
+            (mouseenter)="onMouseEnterItem(index)">
+          <a tabindex="-1" (click)="onSelectItem(index)">{{match}}</a>
         </li>
       </ul>
     </div>
@@ -34,23 +34,25 @@ export class AcMatchesComponent {
     }
   }
 
+  @Output('select') selectItem = new EventEmitter<string>();
+
   get matches(): string[] {
     throw new Error('\'matches\' property is write-only, cannot be read');
   }
 
-  isActive(index: number): boolean {
+  isActiveItem(index: number): boolean {
     return (index === this.activeIndex);
   }
 
-  setActive(index: number): void {
+  onMouseEnterItem(index: number): void {
     this.activeIndex = index;
   }
 
-  select(index: number): void {
-    console.log('Select #%d', index);
+  onSelectItem(index: number): void {
+    this.selectItem.next(index);
   }
 
-  onMouseLeave(): void {
+  onMouseLeaveContainer(): void {
   }
 
   internalMatches: string[];
