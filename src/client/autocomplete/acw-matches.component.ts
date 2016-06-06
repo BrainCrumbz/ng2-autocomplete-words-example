@@ -57,34 +57,43 @@ export class AcwMatchesComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.keyUp$
+    // TODO prevent caret moving to beginning/end of field when
+    // pressing arrow up/down and list is visible
+
+    const activeKeyUp$ = this.keyUp$
+      .filter(_ => this.isOpen());
+
+    activeKeyUp$
       .filter(isArrowUpKey)
       .subscribe(event => {
         this.moveActiveUp();
 
         event.preventDefault();
+        event.stopPropagation();
       })
       .addTo(this.subscription);
 
-    this.keyUp$
+    activeKeyUp$
       .filter(isArrowDownKey)
       .subscribe(event => {
         this.moveActiveDown();
 
         event.preventDefault();
+        event.stopPropagation();
       })
       .addTo(this.subscription);
 
-    this.keyUp$
+    activeKeyUp$
       .filter(isEscKey)
       .subscribe(event => {
         this.close();
 
         event.preventDefault();
+        event.stopPropagation();
       })
       .addTo(this.subscription);
 
-    const selectedByKey$ = this.keyUp$
+    const selectedByKey$ = activeKeyUp$
       .filter(isAcceptSelectionKey);
 
     selectedByKey$
@@ -92,6 +101,7 @@ export class AcwMatchesComponent implements OnInit, OnDestroy {
         this.notifySelected(this.activeIndex);
 
         event.preventDefault();
+        event.stopPropagation();
       })
       .addTo(this.subscription);
   }
@@ -117,6 +127,10 @@ export class AcwMatchesComponent implements OnInit, OnDestroy {
   internalMatches: string[];
 
   activeIndex: number;
+
+  private isOpen(): boolean {
+    return (this.internalMatches.length !== 0);
+  }
 
   private close(): void {
     this.matches = [];
