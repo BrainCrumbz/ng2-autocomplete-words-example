@@ -1,6 +1,11 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 
+import {
+  isArrowUpKey, isAcceptSelectionKey, isArrowDownKey, isEscKey
+} from './acw-utils';
+import './rx-ext/Subscription/addTo';
+
 @Component({
   selector: 'acw-matches',
   host: {
@@ -53,60 +58,42 @@ export class AcwMatchesComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    let subs: Subscription;
+    this.keyUp$
+      .filter(isArrowUpKey)
+      .subscribe(event => {
+        this.moveActiveUp();
 
-    const escPressed$ = this.keyUp$
-      .filter(event => event.keyCode === 27);
+        event.preventDefault();
+      })
+      .addTo(this.subscription);
 
-    const arrowUpPressed$ = this.keyUp$
-      .filter(event => event.keyCode === 38);
+    this.keyUp$
+      .filter(isArrowDownKey)
+      .subscribe(event => {
+        this.moveActiveDown();
 
-    const arrowDownPressed$ = this.keyUp$
-      .filter(event => event.keyCode === 40);
+        event.preventDefault();
+      })
+      .addTo(this.subscription);
 
-    const enterPressed$ = this.keyUp$
-      .filter(event => event.keyCode === 13);
+    this.keyUp$
+      .filter(isEscKey)
+      .subscribe(event => {
+        this.close();
+        event.preventDefault();
+      })
+      .addTo(this.subscription);
 
-    const tabPressed$ = this.keyUp$
-      .filter(event => event.keyCode === 9 && !event.shiftKey
-        && !event.ctrlKey && !event.key);
+    const selectedByKey$ = this.keyUp$
+      .filter(isAcceptSelectionKey);
 
-    subs = escPressed$.subscribe(event => {
-      this.close();
-      event.preventDefault();
-    });
+    selectedByKey$
+      .subscribe(event => {
+        this.notifySelected(this.activeIndex);
 
-    this.subscription.add(subs);
-
-    subs = arrowUpPressed$.subscribe(event => {
-      this.moveActiveUp();
-
-      event.preventDefault();
-    });
-
-    this.subscription.add(subs);
-
-    subs = arrowDownPressed$.subscribe(event => {
-      this.moveActiveDown();
-
-      event.preventDefault();
-    });
-
-    this.subscription.add(subs);
-
-    subs = enterPressed$.subscribe(event => {
-      this.notifySelected(this.activeIndex)
-
-      event.preventDefault();
-    });
-
-    this.subscription.add(subs);
-
-    subs = tabPressed$.subscribe(event => {
-      this.notifySelected(this.activeIndex)
-    });
-
-    this.subscription.add(subs);
+        event.preventDefault();
+      })
+      .addTo(this.subscription);
   }
 
   ngOnDestroy(): void {
@@ -129,15 +116,13 @@ export class AcwMatchesComponent implements OnInit, OnDestroy {
   onMouseLeaveContainer(): void {
   }
 
-  close(): void {
-    this.matches = [];
-  }
-
   internalMatches: string[];
 
   activeIndex: number;
 
-  subscription: Subscription = new Subscription();
+  private close(): void {
+    this.matches = [];
+  }
 
   private moveActiveUp(): void {
     if (this.activeIndex > 0) {
@@ -156,4 +141,6 @@ export class AcwMatchesComponent implements OnInit, OnDestroy {
 
     this.selectItem.next(match);
   }
+
+  private subscription: Subscription = new Subscription();
 }

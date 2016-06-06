@@ -18,6 +18,28 @@ export function isTyping(keyCode: number): boolean {
   );
 }
 
+export function isAcceptSelectionKey(event: KeyboardEvent): boolean {
+  return (
+    event.keyCode === 13           || // enter
+    (event.keyCode === 9
+      && !event.shiftKey
+      && !event.ctrlKey
+      && !event.key)                  // tab
+  );
+}
+
+export function isArrowUpKey(event: KeyboardEvent): boolean {
+  return (event.keyCode === 38);
+}
+
+export function isArrowDownKey(event: KeyboardEvent): boolean {
+  return (event.keyCode === 40);
+}
+
+export function isEscKey(event: KeyboardEvent): boolean {
+  return (event.keyCode === 27);
+}
+
 export function findCurrentWord(fullText: string, currentIndex: number): TextRun[] {
 
   let findWordsRegex = /\S+/g;
