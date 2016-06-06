@@ -2,8 +2,11 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 
 @Component({
   selector: 'acw-matches',
+  host: {
+    '[attr.id]': 'id',
+  },
   template: `
-    <div class="dropdown" [attr.id]="id"
+    <div class="dropdown"
          *ngIf="internalMatches.length > 0"
          (mouseleave)="onMouseLeaveContainer()">
       <ul class="dropdown-menu" style="" role="listbox">
