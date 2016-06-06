@@ -1,9 +1,6 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 
-import {
-  isManagedKey, isAcceptSelectionKey, isArrowUpKey, isArrowDownKey, isEscKey
-} from './acw-utils';
 import './rx-ext/Subscription/addTo';
 
 @Component({
@@ -13,10 +10,10 @@ import './rx-ext/Subscription/addTo';
   },
   template: `
     <div class="dropdown"
-         *ngIf="internalMatches.length > 0">
+         *ngIf="matches.length > 0">
       <ul class="dropdown-menu" style="" role="listbox">
         <li class="dropdown-item"
-            *ngFor="let match of internalMatches; let index = index"
+            *ngFor="let match of matches; let index = index"
             [class.active]="isActiveItem(index)"
             (mouseenter)="onMouseEnterItem(index)">
           <a tabindex="-1" (click)="onSelectItem($event, index)" role="option">
@@ -36,88 +33,26 @@ export class AcwMatchesComponent implements OnInit, OnDestroy {
 
   @Input() id: string;
 
-  @Input() set matches(value: string[]) {
-    this.internalMatches = value;
+  @Input() matches: string[];
 
-    if (this.internalMatches.length > 0) {
-      this.activeIndex = 0;
-    }
-  }
+  @Input() activeIndex: number;
 
-  get matches(): string[] {
-    throw new Error('\'matches\' property is write-only, cannot be read');
-  }
+  @Input() close$: Observable<void>;
 
-  @Input() keyUp$: Observable<KeyboardEvent>;
+  @Output() select = new EventEmitter<number>();
 
-  @Input() keyDown$: Observable<KeyboardEvent>;
-
-  @Output('select') selectItem = new EventEmitter<string>();
+  @Output() over = new EventEmitter<number>();
 
   constructor() {
     this.matches = [];
   }
 
   ngOnInit(): void {
-    // TODO cancel completion on left arrow
-    // TODO cancel completion on lost focus (maybe this in parent directive)
-
-    const activeKeyDown$ = this.keyDown$
-      .filter(_ => this.isOpen());
-
-    const activeKeyUp$ = this.keyUp$
-      .filter(_ => this.isOpen());
-
-    // when list is visible prevent default actions by keys managed later, during keyup event
-    activeKeyDown$
-      .filter(isManagedKey)
-      .subscribe(event => {
-        event.preventDefault();
-        event.stopPropagation();
+    this.close$
+      .subscribe(_ => {
+        this.matches = [];
       })
-      .addTo(this.subscription);
-
-    activeKeyUp$
-      .filter(isArrowUpKey)
-      .subscribe(event => {
-        this.moveActiveUp();
-
-        event.preventDefault();
-        event.stopPropagation();
-      })
-      .addTo(this.subscription);
-
-    activeKeyUp$
-      .filter(isArrowDownKey)
-      .subscribe(event => {
-        this.moveActiveDown();
-
-        event.preventDefault();
-        event.stopPropagation();
-      })
-      .addTo(this.subscription);
-
-    activeKeyUp$
-      .filter(isEscKey)
-      .subscribe(event => {
-        this.close();
-
-        event.preventDefault();
-        event.stopPropagation();
-      })
-      .addTo(this.subscription);
-
-    const selectedByKey$ = activeKeyUp$
-      .filter(isAcceptSelectionKey);
-
-    selectedByKey$
-      .subscribe(event => {
-        this.notifySelected(this.activeIndex);
-
-        event.preventDefault();
-        event.stopPropagation();
-      })
-      .addTo(this.subscription);
+      .add(this.subscription);
   }
 
   ngOnDestroy(): void {
@@ -129,43 +64,17 @@ export class AcwMatchesComponent implements OnInit, OnDestroy {
   }
 
   onMouseEnterItem(index: number): void {
-    this.activeIndex = index;
+    this.over.next(index);
+
+    event.preventDefault();
+    event.stopPropagation();
   }
 
   onSelectItem(event: Event, index: number): void {
-    this.notifySelected(index);
+    this.select.next(index);
 
     event.preventDefault();
-  }
-
-  internalMatches: string[];
-
-  activeIndex: number;
-
-  private isOpen(): boolean {
-    return (this.internalMatches.length !== 0);
-  }
-
-  private close(): void {
-    this.matches = [];
-  }
-
-  private moveActiveUp(): void {
-    if (this.activeIndex > 0) {
-      this.activeIndex--;
-    }
-  }
-
-  private moveActiveDown(): void {
-    if (this.activeIndex < this.internalMatches.length - 1) {
-      this.activeIndex++;
-    }
-  }
-
-  private notifySelected(index: number): void {
-    const match = this.internalMatches[index];
-
-    this.selectItem.next(match);
+    event.stopPropagation();
   }
 
   private subscription: Subscription = new Subscription();

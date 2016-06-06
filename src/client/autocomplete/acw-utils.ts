@@ -1,3 +1,7 @@
+export interface Disposable {
+    dispose();
+}
+
 export interface TextRun {
   fullText: string;
   text: string;
@@ -14,7 +18,7 @@ export function isTyping(keyCode: number): boolean {
     keyCode > 64 && keyCode < 91   || // letter keys
     keyCode > 95 && keyCode < 112  || // numpad keys
     keyCode > 185 && keyCode < 193 || // ;=,-./` in order
-    keyCode > 218 && keyCode < 223   // [\]' in order
+    keyCode > 218 && keyCode < 223    // [\]' in order
   );
 }
 
@@ -26,7 +30,10 @@ export function isManagedKey(event: KeyboardEvent): boolean {
       && !event.shiftKey
       && !event.ctrlKey
       && !event.altKey)            || // tab
+    event.keyCode === 13           || // enter
+    event.keyCode === 27           || // esc
     event.keyCode === 38           || // arrow up
+    event.keyCode === 39           || // arrow right
     event.keyCode === 40              // arrow down
   );
 }
