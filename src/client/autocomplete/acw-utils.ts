@@ -20,12 +20,12 @@ export function isTyping(keyCode: number): boolean {
 
 export function isAcceptSelectionKey(event: KeyboardEvent): boolean {
   return (
-    event.keyCode === 13           || // enter
     (event.keyCode === 9
       && !event.shiftKey
       && !event.ctrlKey
-      && !event.key)               || // tab
-    event.keyCode === 39              // right arrow
+      && !event.altKey)            || // tab
+    event.keyCode === 13           || // enter
+    event.keyCode === 39              // arrow right
   );
 }
 
