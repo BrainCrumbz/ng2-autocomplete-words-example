@@ -13,8 +13,7 @@ import './rx-ext/Subscription/addTo';
   },
   template: `
     <div class="dropdown"
-         *ngIf="internalMatches.length > 0"
-         (mouseleave)="onMouseLeaveContainer()">
+         *ngIf="internalMatches.length > 0">
       <ul class="dropdown-menu" style="" role="listbox">
         <li class="dropdown-item"
             *ngFor="let match of internalMatches; let index = index"
@@ -112,9 +111,6 @@ export class AcwMatchesComponent implements OnInit, OnDestroy {
     this.notifySelected(index);
 
     event.preventDefault();
-  }
-
-  onMouseLeaveContainer(): void {
   }
 
   internalMatches: string[];

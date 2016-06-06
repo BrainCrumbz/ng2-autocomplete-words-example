@@ -71,9 +71,12 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
         // could not find another way to set value without
         // overwriting the one set from client code
 
-        this.elementRef.nativeElement.value = text;
-
         this.setMatches([]);
+
+        this.elementRef.nativeElement.value = text;
+        /* TODO
+        this.elementRef.nativeElement.focus();
+        */
       })
       .addTo(this.subscription);
   }
