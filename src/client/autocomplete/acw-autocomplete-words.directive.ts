@@ -14,6 +14,7 @@ type SearchFn = (text: string) => Observable<string[]>;
   selector: '[acwAutocompleteWords]',
   host: {
     '(keyup)': 'onKeyUp($event)',
+    '(keydown)': 'onKeyDown($event)',
     'aria-haspopup': 'true',
     '[attr.aria-controls]': 'hostAriaControls',
   },
@@ -49,6 +50,7 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
     this.setMatches = this.noop;
 
     this.keyUpSubject = new Subject<KeyboardEvent>();
+    this.keyDownSubject = new Subject<KeyboardEvent>();
     this.matchSelectedSubject = new Subject<string>();
 
     const inputDriver = new AcwInputDriver(
@@ -98,6 +100,7 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
         this.matchesComponent.id = newInstanceId;
         this.matchesComponent.matches = [];
         this.matchesComponent.keyUp$ = this.keyUpSubject;
+        this.matchesComponent.keyDown$ = this.keyDownSubject;
 
         this.setMatches = value => {
           this.matchesComponent.matches = value;
@@ -130,6 +133,10 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
 
   onKeyUp(event: KeyboardEvent): void {
     this.keyUpSubject.next(event);
+  }
+
+  onKeyDown(event: KeyboardEvent): void {
+    this.keyDownSubject.next(event);
   }
 
   hostAriaControls: string;
@@ -167,6 +174,8 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
   private matchesComponent: AcwMatchesComponent;
 
   private keyUpSubject: Subject<KeyboardEvent>;
+
+  private keyDownSubject: Subject<KeyboardEvent>;
 
   private matchSelectedSubject: Subject<string>;
 

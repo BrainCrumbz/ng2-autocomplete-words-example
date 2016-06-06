@@ -13,7 +13,9 @@ import { countryNames } from './countries';
             <fieldset>
 
               <div class="form-group">
-                <label for="dummyInput">An input field with autocomplete-words, detecting country names:</label>
+                <label for="dummyInput">
+                  An input field with autocomplete-words, detecting country names:
+                </label>
                 <input id="dummyInput" [(ngModel)]="dummyText"
                       type="text" class="form-control" autofocus=""
                       placeholder="Autocomplete on country names"
@@ -21,7 +23,9 @@ import { countryNames } from './countries';
               </div>
 
               <div class="form-group">
-                <label for="anotherInput">Another input, no autocomplete, just to play with focus:</label>
+                <label for="anotherInput">
+                  Another input, no autocomplete, just to play with focus:
+                </label>
                 <input id="anotherInput" [(ngModel)]="anotherText"
                       type="text" class="form-control" placeholder="No autocomplete here">
               </div>

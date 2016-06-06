@@ -18,6 +18,19 @@ export function isTyping(keyCode: number): boolean {
   );
 }
 
+export function isManagedKey(event: KeyboardEvent): boolean {
+  // * prevent caret from moving in field when pressing arrow up/down
+  // * prevent field from losing focus when pressing tab
+  return (
+    (event.keyCode === 9
+      && !event.shiftKey
+      && !event.ctrlKey
+      && !event.altKey)            || // tab
+    event.keyCode === 38           || // arrow up
+    event.keyCode === 40              // arrow down
+  );
+}
+
 export function isAcceptSelectionKey(event: KeyboardEvent): boolean {
   return (
     (event.keyCode === 9

@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angu
 import { Observable, Subscription } from 'rxjs';
 
 import {
-  isAcceptSelectionKey, isArrowUpKey, isArrowDownKey, isEscKey
+  isManagedKey, isAcceptSelectionKey, isArrowUpKey, isArrowDownKey, isEscKey
 } from './acw-utils';
 import './rx-ext/Subscription/addTo';
 
@@ -50,6 +50,8 @@ export class AcwMatchesComponent implements OnInit, OnDestroy {
 
   @Input() keyUp$: Observable<KeyboardEvent>;
 
+  @Input() keyDown$: Observable<KeyboardEvent>;
+
   @Output('select') selectItem = new EventEmitter<string>();
 
   constructor() {
@@ -57,11 +59,23 @@ export class AcwMatchesComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // TODO prevent caret moving to beginning/end of field when
-    // pressing arrow up/down and list is visible
+    // TODO cancel completion on left arrow
+    // TODO cancel completion on lost focus (maybe this in parent directive)
+
+    const activeKeyDown$ = this.keyDown$
+      .filter(_ => this.isOpen());
 
     const activeKeyUp$ = this.keyUp$
       .filter(_ => this.isOpen());
+
+    // when list is visible prevent default actions by keys managed later, during keyup event
+    activeKeyDown$
+      .filter(isManagedKey)
+      .subscribe(event => {
+        event.preventDefault();
+        event.stopPropagation();
+      })
+      .addTo(this.subscription);
 
     activeKeyUp$
       .filter(isArrowUpKey)
