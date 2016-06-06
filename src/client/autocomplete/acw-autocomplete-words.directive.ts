@@ -68,15 +68,19 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
 
     inputDriver.text$
       .subscribe(text => {
-        // could not find another way to set value without
-        // overwriting the one set from client code
-
+        // let list container close
         this.setMatches([]);
 
+        // could not find another way to set value without
+        // overwriting the one set from client code
         this.elementRef.nativeElement.value = text;
-        /* TODO
-        this.elementRef.nativeElement.focus();
-        */
+
+        // when selected by mouse click, give back focus to field
+        const inputHasFocus = (this.elementRef.nativeElement === document.activeElement);
+
+        if (!inputHasFocus) {
+          this.elementRef.nativeElement.focus();
+        }
       })
       .addTo(this.subscription);
   }

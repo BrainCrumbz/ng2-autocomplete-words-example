@@ -79,6 +79,7 @@ export class AcwMatchesComponent implements OnInit, OnDestroy {
       .filter(isEscKey)
       .subscribe(event => {
         this.close();
+
         event.preventDefault();
       })
       .addTo(this.subscription);
