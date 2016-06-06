@@ -50,27 +50,6 @@ export class AcwAutoCompleteDirective {
     this.keyUpSubject = new Subject<KeyboardEvent>();
     this.matchSelectedSubject = new Subject<string>();
 
-    const escPressed$ = this.keyUpSubject
-      .filter(event => event.keyCode === 27)
-      .do(event => event.preventDefault());
-
-    const arrowUpPressed$ = this.keyUpSubject
-      .filter(event => event.keyCode === 38)
-      .do(event => event.preventDefault());
-
-    const arrowDownPressed$ = this.keyUpSubject
-      .filter(event => event.keyCode === 40)
-      .do(event => event.preventDefault());
-
-    const enterPressed$ = this.keyUpSubject
-      .filter(event => event.keyCode === 13)
-      .do(event => event.preventDefault());
-
-    const tabPressed$ = this.keyUpSubject
-      .filter(event => event.keyCode === 9 && !event.shiftKey
-        && !event.ctrlKey && !event.key)
-      .do(event => event.preventDefault());
-
     const inputDriver = new AcwInputDriver(
       this.keyUpSubject,
       this.matchSelectedSubject,
@@ -98,11 +77,13 @@ export class AcwAutoCompleteDirective {
       .then(componentRef => {
         const newInstanceId = this.makeNewId();
 
+        this.hostAriaControls = newInstanceId;
+
         this.matchesComponent = componentRef.instance;
 
         this.matchesComponent.id = newInstanceId;
         this.matchesComponent.matches = [];
-        this.hostAriaControls = newInstanceId;
+        this.matchesComponent.keyUp$ = this.keyUpSubject;
 
         this.setMatches = value => {
           this.matchesComponent.matches = value;
@@ -174,6 +155,14 @@ export class AcwAutoCompleteDirective {
 
   private setMatches: (matches: string[]) => void;
 
+  private noop: (matches: string[]) => void = _ => {};
+
+  private noopSearch: SearchFn = _ => Observable.of([]);
+
+  private idPrefix = 'acw-matches-';
+
+  private static counter: number = 0;
+
   private static findLowerCaseMatches(
     completions: string[], text: string): Observable<string[]> {
 
@@ -184,12 +173,4 @@ export class AcwAutoCompleteDirective {
 
     return Observable.of(matchingCompletions);
   }
-
-  private noop: (matches: string[]) => void = _ => {};
-
-  private noopSearch: SearchFn = _ => Observable.of([]);
-
-  private idPrefix = 'acw-matches-';
-
-  private static counter: number = 0;
 }

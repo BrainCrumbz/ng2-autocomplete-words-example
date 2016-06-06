@@ -1,4 +1,5 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
+import { Observable, Subscription } from 'rxjs';
 
 @Component({
   selector: 'acw-matches',
@@ -27,11 +28,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
     }
   `],
 })
-export class AcwMatchesComponent {
-
-  constructor() {
-    this.matches = [];
-  }
+export class AcwMatchesComponent implements OnInit, OnDestroy {
 
   @Input() id: string;
 
@@ -43,10 +40,76 @@ export class AcwMatchesComponent {
     }
   }
 
-  @Output('select') selectItem = new EventEmitter<string>();
-
   get matches(): string[] {
     throw new Error('\'matches\' property is write-only, cannot be read');
+  }
+
+  @Input() keyUp$: Observable<KeyboardEvent>;
+
+  @Output('select') selectItem = new EventEmitter<string>();
+
+  constructor() {
+    this.matches = [];
+  }
+
+  ngOnInit(): void {
+    let subs: Subscription;
+
+    const escPressed$ = this.keyUp$
+      .filter(event => event.keyCode === 27);
+
+    const arrowUpPressed$ = this.keyUp$
+      .filter(event => event.keyCode === 38);
+
+    const arrowDownPressed$ = this.keyUp$
+      .filter(event => event.keyCode === 40);
+
+    const enterPressed$ = this.keyUp$
+      .filter(event => event.keyCode === 13);
+
+    const tabPressed$ = this.keyUp$
+      .filter(event => event.keyCode === 9 && !event.shiftKey
+        && !event.ctrlKey && !event.key);
+
+    subs = escPressed$.subscribe(event => {
+      this.close();
+      event.preventDefault();
+    });
+
+    this.subscription.add(subs);
+
+    subs = arrowUpPressed$.subscribe(event => {
+      this.moveActiveUp();
+
+      event.preventDefault();
+    });
+
+    this.subscription.add(subs);
+
+    subs = arrowDownPressed$.subscribe(event => {
+      this.moveActiveDown();
+
+      event.preventDefault();
+    });
+
+    this.subscription.add(subs);
+
+    subs = enterPressed$.subscribe(event => {
+      this.notifySelected(this.activeIndex)
+
+      event.preventDefault();
+    });
+
+    this.subscription.add(subs);
+
+    subs = tabPressed$.subscribe(event => {
+      this.notifySelected(this.activeIndex)
+    });
+
+    this.subscription.add(subs);
+  }
+
+  ngOnDestroy(): void {
   }
 
   isActiveItem(index: number): boolean {
@@ -58,9 +121,7 @@ export class AcwMatchesComponent {
   }
 
   onSelectItem(event: Event, index: number): void {
-    const match = this.internalMatches[index];
-
-    this.selectItem.next(match);
+    this.notifySelected(index);
 
     event.preventDefault();
   }
@@ -68,6 +129,31 @@ export class AcwMatchesComponent {
   onMouseLeaveContainer(): void {
   }
 
+  close(): void {
+    this.matches = [];
+  }
+
   internalMatches: string[];
+
   activeIndex: number;
+
+  subscription: Subscription = new Subscription();
+
+  private moveActiveUp(): void {
+    if (this.activeIndex > 0) {
+      this.activeIndex--;
+    }
+  }
+
+  private moveActiveDown(): void {
+    if (this.activeIndex < this.internalMatches.length - 1) {
+      this.activeIndex++;
+    }
+  }
+
+  private notifySelected(index: number): void {
+    const match = this.internalMatches[index];
+
+    this.selectItem.next(match);
+  }
 }
