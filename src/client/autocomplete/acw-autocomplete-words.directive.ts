@@ -2,10 +2,11 @@ import {
   Directive, Input, AfterViewInit, OnDestroy,
   DynamicComponentLoader, ElementRef, ViewContainerRef, ComponentRef
 } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 
 import { AcwMatchesComponent } from './acw-matches.component';
 import { AcwInputDriver } from './acw-input-driver';
+import './rx-ext/Subscription/addTo';
 
 type SearchFn = (text: string) => Observable<string[]>;
 
@@ -17,7 +18,7 @@ type SearchFn = (text: string) => Observable<string[]>;
     '[attr.aria-controls]': 'hostAriaControls',
   },
 })
-export class AcwAutoCompleteDirective {
+export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
 
   @Input() set acwAutocompleteWords(values: string[]) {
     if (!values || !Array.isArray(values)) {
@@ -62,13 +63,19 @@ export class AcwAutoCompleteDirective {
     inputDriver.matches$
       .subscribe(completions => {
         this.setMatches(completions);
-      });
+      })
+      .addTo(this.subscription);
 
-    inputDriver.text$.subscribe(text => {
-      this.elementRef.nativeElement.value = text;
+    inputDriver.text$
+      .subscribe(text => {
+        // could not find another way to set value without
+        // overwriting the one set from client code
 
-      this.setMatches([]);
-    });
+        this.elementRef.nativeElement.value = text;
+
+        this.setMatches([]);
+      })
+      .addTo(this.subscription);
   }
 
   ngAfterViewInit(): void {
@@ -92,7 +99,8 @@ export class AcwAutoCompleteDirective {
         this.matchesComponent.selectItem
           .subscribe((match: string) => {
             this.matchSelectedSubject.next(match);
-          });
+          })
+          .addTo(this.subscription);
 
         return componentRef;
       });
@@ -109,6 +117,8 @@ export class AcwAutoCompleteDirective {
         componentRef.destroy();
       });
     }
+
+    this.subscription.unsubscribe();
   }
 
   onKeyUp(event: KeyboardEvent): void {
@@ -154,6 +164,8 @@ export class AcwAutoCompleteDirective {
   private matchSelectedSubject: Subject<string>;
 
   private setMatches: (matches: string[]) => void;
+
+  private subscription: Subscription = new Subscription();
 
   private noop: (matches: string[]) => void = _ => {};
 

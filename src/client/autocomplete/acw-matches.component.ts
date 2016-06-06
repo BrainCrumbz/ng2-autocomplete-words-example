@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angu
 import { Observable, Subscription } from 'rxjs';
 
 import {
-  isArrowUpKey, isAcceptSelectionKey, isArrowDownKey, isEscKey
+  isAcceptSelectionKey, isArrowUpKey, isArrowDownKey, isEscKey
 } from './acw-utils';
 import './rx-ext/Subscription/addTo';
 
@@ -97,6 +97,7 @@ export class AcwMatchesComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
 
   isActiveItem(index: number): boolean {

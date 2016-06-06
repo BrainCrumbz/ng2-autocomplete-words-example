@@ -24,7 +24,8 @@ export function isAcceptSelectionKey(event: KeyboardEvent): boolean {
     (event.keyCode === 9
       && !event.shiftKey
       && !event.ctrlKey
-      && !event.key)                  // tab
+      && !event.key)               || // tab
+    event.keyCode === 39              // right arrow
   );
 }
 
