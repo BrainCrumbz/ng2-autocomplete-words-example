@@ -81,6 +81,12 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnInit, OnDestro
       })
       .addTo(this.subscription);
 
+    this.listDriver.doClose$
+      .subscribe(_ => {
+        this.setComponentMatches([]);
+      })
+      .addTo(this.subscription);
+
     const inputDriver = new AcwInputDriver(
       this.keyUpSubject.asObservable(),
       this.listDriver.selectedMatch$,
@@ -128,7 +134,7 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnInit, OnDestro
         this.matchesComponent.id = newInstanceId;
         this.matchesComponent.matches = [];
 
-        // connect component inputs to driver outputs, also using Subject as bypass
+        // update component inputs upon driver outputs changing
         this.setComponentMatches = matches => {
           this.matchesComponent.matches = matches;
         };
@@ -136,8 +142,6 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnInit, OnDestro
         this.seComponentIndex = index => {
           this.matchesComponent.activeIndex = index;
         };
-
-        this.matchesComponent.close$ = this.listDriver.doClose$;
 
         // forward component outputs to driver inputs, using Subject as bypass
         this.matchesComponent.select

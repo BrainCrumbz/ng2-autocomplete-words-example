@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 
 import './rx-ext/Subscription/addTo';
@@ -29,7 +29,7 @@ import './rx-ext/Subscription/addTo';
     }
   `],
 })
-export class AcwMatchesComponent implements OnInit, OnDestroy {
+export class AcwMatchesComponent {
 
   @Input() id: string;
 
@@ -37,26 +37,12 @@ export class AcwMatchesComponent implements OnInit, OnDestroy {
 
   @Input() activeIndex: number;
 
-  @Input() close$: Observable<void>;
-
   @Output() select = new EventEmitter<number>();
 
   @Output() over = new EventEmitter<number>();
 
   constructor() {
     this.matches = [];
-  }
-
-  ngOnInit(): void {
-    this.close$
-      .subscribe(_ => {
-        this.matches = [];
-      })
-      .add(this.subscription);
-  }
-
-  ngOnDestroy(): void {
-    this.subscription.unsubscribe();
   }
 
   isActiveItem(index: number): boolean {
@@ -76,6 +62,4 @@ export class AcwMatchesComponent implements OnInit, OnDestroy {
     event.preventDefault();
     event.stopPropagation();
   }
-
-  private subscription: Subscription = new Subscription();
 }
