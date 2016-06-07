@@ -1,8 +1,8 @@
 import { Observable, Subject, Subscription } from 'rxjs';
 
 import {
-  isManagedKey, isAcceptSelectionKey, isArrowUpKey, isArrowDownKey, isEscKey,
-  Disposable
+  isManagedKey, isAcceptSelectionKey, isClosingKey,
+  isArrowUpKey, isArrowDownKey, Disposable
 } from './acw-utils';
 
 export class AcwListDriver implements Disposable {
@@ -13,8 +13,8 @@ export class AcwListDriver implements Disposable {
     indexChangedByMouse$: Observable<number>,
     indexSelectedByClick$: Observable<number>) {
 
-    // TODO cancel completion on left arrow
     // TODO cancel completion on lost focus (maybe this in parent directive)
+    // TODO FIX when closing, matches are forced to empty, but driver still thinks is active
 
     const isActive$ = matches$
       .map(matches => matches.length !== 0);
@@ -67,7 +67,7 @@ export class AcwListDriver implements Disposable {
       .merge(indexChangedByMouse$, indexReset$);
 
     this.doClose$ = activeKeyUp$
-      .filter(isEscKey)
+      .filter(isClosingKey)
       .map(_ => null as void);
 
     const selectByKey$ = activeKeyUp$

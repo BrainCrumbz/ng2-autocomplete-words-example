@@ -23,8 +23,9 @@ export function isTyping(keyCode: number): boolean {
 }
 
 export function isManagedKey(event: KeyboardEvent): boolean {
-  // * prevent caret from moving in field when pressing arrow up/down
+  // * prevent caret from moving in field when pressing arrow up/down/right
   // * prevent field from losing focus when pressing tab
+  // * arrow left _is_ managed, but its default behaviour is retained
   return (
     (event.keyCode === 9
       && !event.shiftKey
@@ -57,8 +58,11 @@ export function isArrowDownKey(event: KeyboardEvent): boolean {
   return (event.keyCode === 40);
 }
 
-export function isEscKey(event: KeyboardEvent): boolean {
-  return (event.keyCode === 27);
+export function isClosingKey(event: KeyboardEvent): boolean {
+  return (
+    event.keyCode === 27           || // esc
+    event.keyCode === 37              // arrow left
+  );
 }
 
 export function findCurrentWord(fullText: string, currentIndex: number): TextRun[] {
