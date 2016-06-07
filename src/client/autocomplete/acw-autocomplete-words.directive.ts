@@ -97,8 +97,8 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnInit, OnDestro
       });
 
     inputDriver.matches$
-      .subscribe(completions => {
-        this.setMatches(completions);
+      .subscribe(matches => {
+        this.setMatches(matches);
       })
       .addTo(this.subscription);
 
@@ -119,6 +119,10 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnInit, OnDestro
         }
       })
       .addTo(this.subscription);
+  }
+
+  ngOnInit(): void {
+     this.setListDriverMatches(this.completions);
   }
 
   ngAfterViewInit(): void {
@@ -160,10 +164,6 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnInit, OnDestro
       });
   }
 
-  ngOnInit(): void {
-     this.matchesSubject.next(this.completions);
-  }
-
   ngOnDestroy(): void {
     if (this.componentLoadPromise) {
       this.componentLoadPromise.then(componentRef => {
@@ -193,8 +193,12 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnInit, OnDestro
   hostAriaControls: string;
 
   private setMatches(matches: string[]) {
-    this.matchesSubject.next(matches);
+    this.setListDriverMatches(matches);
     this.setComponentMatches(matches);
+  }
+
+  private setListDriverMatches(matches: string[]) {
+    this.matchesSubject.next(matches);
   }
 
   private noopMatches(matches: string[]) {

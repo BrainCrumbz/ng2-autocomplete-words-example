@@ -15,8 +15,16 @@ export class AcwListDriver implements Disposable {
 
     // TODO cancel completion on lost focus (maybe this in parent directive)
     // TODO FIX when closing, matches are forced to empty, but driver still thinks is active
+    // TODO FIX when new matches arrive, index is still the same. It seems like new matches
+    // are not detected
 
-    const isActive$ = matches$
+    const safeMatches$ = matches$
+      .startWith([]);
+
+    // make sure not to use this, but only the initialized one
+    matches$ = null;
+
+    const isActive$ = safeMatches$
       .map(matches => matches.length !== 0);
 
     const activeKeyDown$ = keyDown$
@@ -41,7 +49,7 @@ export class AcwListDriver implements Disposable {
       .subscribe(AcwListDriver.stopEvent)
       .addTo(this.subscription);
 
-    const indexReset$ = matches$
+    const indexReset$ = safeMatches$
       .filter(matches => matches.length > 0)
       .map(_ => 0);
 
@@ -55,16 +63,23 @@ export class AcwListDriver implements Disposable {
 
     this.currentIndex$ = Observable
       .merge(arrowUpIndexChange$, arrowDownIndexChange$)
-      .scan((acc, change) => acc + change, 0)
-      .withLatestFrom(matches$)
-      .filter(tuple => {
-        const index: number = tuple[0];
-        const matches: string[] = tuple[1];
+      .withLatestFrom(safeMatches$)
+      .scan((acc, tuple) => {
+        const change: number = tuple[0];
+        const length: number = tuple[1].length;
 
-        return (0 <= index && index < matches.length);
-      })
-      .map(tuple => tuple[0])
-      .merge(indexChangedByMouse$, indexReset$);
+        let index = acc + change;
+
+        if (index < 0) {
+          index = 0;
+        } else if (!(index < length)) {
+          index = length - 1;
+        }
+
+        return index;
+      }, 0)
+      .merge(indexChangedByMouse$, indexReset$)
+      .startWith(0);
 
     this.doClose$ = activeKeyUp$
       .filter(isClosingKey)
@@ -80,7 +95,7 @@ export class AcwListDriver implements Disposable {
       .merge(indexSelectedByKey$, indexSelectedByClick$);
 
     this.selectedMatch$ = indexSelected$
-      .withLatestFrom(matches$, (currentIndex, matches) => {
+      .withLatestFrom(safeMatches$, (currentIndex, matches) => {
         const match = matches[currentIndex];
 
         return match;
