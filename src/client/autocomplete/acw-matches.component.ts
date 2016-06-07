@@ -26,6 +26,10 @@ import './rx-ext/Subscription/addTo';
     .dropdown-menu {
       display: block;
     }
+    /* TODO remove */
+    .active {
+      background-color: aquamarine;
+    }
   `],
 })
 export class AcwMatchesComponent {

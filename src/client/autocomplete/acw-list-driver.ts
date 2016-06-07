@@ -2,7 +2,7 @@ import { Observable, Subject, Subscription } from 'rxjs';
 
 import {
   isManagedKey, isAcceptSelectionKey, isClosingKey,
-  isArrowUpKey, isArrowDownKey, Disposable
+  isArrowUpKey, isArrowDownKey, Disposable, limitPositive
 } from './acw-utils';
 
 export class AcwListDriver implements Disposable {
@@ -14,9 +14,6 @@ export class AcwListDriver implements Disposable {
     indexSelectedByClick$: Observable<number>) {
 
     // TODO cancel completion on lost focus (maybe this in parent directive)
-    // TODO FIX when closing, matches are forced to empty, but driver still thinks is active
-    // TODO FIX when new matches arrive, index is still the same. It seems like new matches
-    // are not detected
 
     const safeMatches$ = matches$
       .startWith([]);
@@ -27,7 +24,7 @@ export class AcwListDriver implements Disposable {
     const isActive$ = safeMatches$
       .map(matches => matches.length !== 0);
 
-    const activeKeyDown$ = keyDown$
+    let activeKeyDown$ = keyDown$
       .withLatestFrom(isActive$)
       .filter(tuple => tuple[1])
       .map(tuple => tuple[0]);
@@ -43,43 +40,59 @@ export class AcwListDriver implements Disposable {
       .subscribe(AcwListDriver.stopEvent)
       .addTo(this.subscription);
 
+    // make sure not to use this by mistake instead of keyup version
+    activeKeyDown$ = null;
+
     // when list is visible prevent default actions by keys managed now, during keyup event
     activeKeyUp$
       .filter(isManagedKey)
       .subscribe(AcwListDriver.stopEvent)
       .addTo(this.subscription);
 
-    const indexReset$ = safeMatches$
-      .filter(matches => matches.length > 0)
-      .map(_ => 0);
+    this.currentIndex$ = safeMatches$
+      //.do(value => { console.log('safeMatches'); console.log(value); })
+      .map(matches => {
+        const length = matches.length;
 
-    const arrowUpIndexChange$ = activeKeyUp$
-      .filter(isArrowUpKey)
-      .map(_ => -1);
-
-    const arrowDownIndexChange$ = activeKeyUp$
-      .filter(isArrowDownKey)
-      .map(_ => +1);
-
-    this.currentIndex$ = Observable
-      .merge(arrowUpIndexChange$, arrowDownIndexChange$)
-      .withLatestFrom(safeMatches$)
-      .scan((acc, tuple) => {
-        const change: number = tuple[0];
-        const length: number = tuple[1].length;
-
-        let index = acc + change;
-
-        if (index < 0) {
-          index = 0;
-        } else if (!(index < length)) {
-          index = length - 1;
+        //console.log('length: ' + length);
+        /*
+        if (matches.length <= 1) {
+          return Observable.of(0);
         }
+        */
+        const initialIndex = 0;
 
-        return index;
-      }, 0)
-      .merge(indexChangedByMouse$, indexReset$)
-      .startWith(0);
+        // it does not work if using active keyup events, and
+        // there's no need anyway: logic takes care of empty match list too
+
+        const arrowUpIndexChange$ = keyUp$
+          .filter(isArrowUpKey)
+          .map(_ => -1);
+
+        const arrowDownIndexChange$ = keyUp$
+          .filter(isArrowDownKey)
+          .map(_ => +1);
+
+        const arrowKeyIndexChange$ = Observable
+          .merge(arrowUpIndexChange$, arrowDownIndexChange$)/*
+          .do(value => console.log('arrow change: ' + value))*/;
+
+        const arrowKeyIndex$ = arrowKeyIndexChange$
+          .scan((acc, change) => {
+            const index = limitPositive(acc + change, length);
+
+            return index;
+
+          }, initialIndex)
+          //.do(value => console.log('arrow key index: ' + value))
+          .startWith(0);
+
+        return arrowKeyIndex$;
+      })
+      .switch()
+      .merge(indexChangedByMouse$)
+      //.do(value => console.log('index: ' + value))
+      .share();
 
     this.doClose$ = activeKeyUp$
       .filter(isClosingKey)

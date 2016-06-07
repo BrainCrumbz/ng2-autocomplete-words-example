@@ -93,3 +93,21 @@ export function findCurrentWord(fullText: string, currentIndex: number): TextRun
     ? [ wordResult ]
     : [];
 }
+
+export function limitPositive(index: number, high: number): number {
+  let limited;
+
+  if (high === 0) {
+    return 0;
+  }
+
+  if (index <= 0) {
+    limited = 0;
+  } else if (index >= high) {
+    limited = high - 1;
+  } else {
+    limited = index;
+  }
+
+  return limited;
+}

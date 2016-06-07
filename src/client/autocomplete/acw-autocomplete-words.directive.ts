@@ -58,7 +58,7 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnInit, OnDestro
     private viewContainerRef: ViewContainerRef) {
 
     this.setComponentMatches = this.noopMatches;
-    this.seComponentIndex = this.noopIndex;
+    this.setComponentIndex = this.noopIndex;
 
     this.matchesSubject = new Subject<string[]>();
     this.keyUpSubject = new Subject<KeyboardEvent>();
@@ -77,7 +77,7 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnInit, OnDestro
 
     this.listDriver.currentIndex$
       .subscribe(currentIndex => {
-        this.seComponentIndex(currentIndex);
+        this.setComponentIndex(currentIndex);
       })
       .addTo(this.subscription);
 
@@ -121,8 +121,8 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnInit, OnDestro
       .addTo(this.subscription);
   }
 
+  // TODO remove if not needed
   ngOnInit(): void {
-     this.setListDriverMatches(this.completions);
   }
 
   ngAfterViewInit(): void {
@@ -143,7 +143,7 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnInit, OnDestro
           this.matchesComponent.matches = matches;
         };
 
-        this.seComponentIndex = index => {
+        this.setComponentIndex = index => {
           this.matchesComponent.activeIndex = index;
         };
 
@@ -168,7 +168,7 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnInit, OnDestro
     if (this.componentLoadPromise) {
       this.componentLoadPromise.then(componentRef => {
         this.setComponentMatches = this.noopMatches;
-        this.seComponentIndex = this.noopIndex;
+        this.setComponentIndex = this.noopIndex;
         this.matchesComponent = void 0;
         this.componentLoadPromise = void 0;
         this.hostAriaControls = null;
@@ -255,7 +255,7 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnInit, OnDestro
 
   private setComponentMatches: (matches: string[]) => void;
 
-  private seComponentIndex: (index: number) => void;
+  private setComponentIndex: (index: number) => void;
 
   private noopSearch: SearchFn = _ => Observable.of([]);
 
