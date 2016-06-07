@@ -2,7 +2,7 @@ import {
   Directive, Input, AfterViewInit, OnDestroy,
   DynamicComponentLoader, ElementRef, ViewContainerRef, ComponentRef
 } from '@angular/core';
-import { Observable, Subject, Subscription } from 'rxjs';
+import { Observable, Observer, Subject, Subscription } from 'rxjs';
 
 import { AcwMatchesComponent } from './acw-matches.component';
 import { AcwInputDriver } from './acw-input-driver';
@@ -60,18 +60,24 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
     this.setComponentMatches = this.noopMatches;
     this.setComponentIndex = this.noopIndex;
 
-    this.matchesSubject = new Subject<string[]>();
-    this.keyUpSubject = new Subject<KeyboardEvent>();
-    this.keyDownSubject = new Subject<KeyboardEvent>();
-    this.listIndexClickedSubject = new Subject<number>();
-    this.listIndexHoveredSubject = new Subject<number>();
+    const matchesSubject = new Subject<string[]>();
+    const keyUpSubject = new Subject<KeyboardEvent>();
+    const keyDownSubject = new Subject<KeyboardEvent>();
+    const listIndexClickedSubject = new Subject<number>();
+    const listIndexHoveredSubject = new Subject<number>();
+
+    this.matchesEmitter = matchesSubject;
+    this.keyUpEmitter = keyUpSubject;
+    this.keyDownEmitter = keyDownSubject;
+    this.listIndexClickedEmitter = listIndexClickedSubject;
+    this.listIndexHoveredEmitter = listIndexHoveredSubject;
 
     this.listDriver = new AcwListDriver(
-      this.matchesSubject.asObservable(),
-      this.keyUpSubject.asObservable(),
-      this.keyDownSubject.asObservable(),
-      this.listIndexHoveredSubject.asObservable(),
-      this.listIndexClickedSubject.asObservable());
+      matchesSubject.asObservable(),
+      keyUpSubject.asObservable(),
+      keyDownSubject.asObservable(),
+      listIndexHoveredSubject.asObservable(),
+      listIndexClickedSubject.asObservable());
 
     this.subscription.add(() => this.listDriver.dispose());
 
@@ -88,7 +94,7 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
       .addTo(this.subscription);
 
     const inputDriver = new AcwInputDriver(
-      this.keyUpSubject.asObservable(),
+      keyUpSubject.asObservable(),
       this.listDriver.selectedMatch$,
       this.getMatches.bind(this),
       {
@@ -146,13 +152,13 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
         // forward component outputs to driver inputs, using Subject as bypass
         this.matchesComponent.select
           .subscribe((index: number) => {
-            this.listIndexClickedSubject.next(index);
+            this.listIndexClickedEmitter.next(index);
           })
           .addTo(this.subscription);
 
         this.matchesComponent.over
           .subscribe((index: number) => {
-            this.listIndexHoveredSubject.next(index);
+            this.listIndexHoveredEmitter.next(index);
           })
           .addTo(this.subscription);
 
@@ -179,11 +185,11 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
   // Bound to view
 
   onKeyUp(event: KeyboardEvent): void {
-    this.keyUpSubject.next(event);
+    this.keyUpEmitter.next(event);
   }
 
   onKeyDown(event: KeyboardEvent): void {
-    this.keyDownSubject.next(event);
+    this.keyDownEmitter.next(event);
   }
 
   hostAriaControls: string;
@@ -194,7 +200,7 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
   }
 
   private setListDriverMatches(matches: string[]) {
-    this.matchesSubject.next(matches);
+    this.matchesEmitter.next(matches);
   }
 
   private noopMatches(matches: string[]) {
@@ -239,15 +245,15 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
 
   private matchesComponent: AcwMatchesComponent;
 
-  private matchesSubject: Subject<string[]>;
+  private matchesEmitter: Observer<string[]>;
 
-  private keyUpSubject: Subject<KeyboardEvent>;
+  private keyUpEmitter: Observer<KeyboardEvent>;
 
-  private keyDownSubject: Subject<KeyboardEvent>;
+  private keyDownEmitter: Observer<KeyboardEvent>;
 
-  private listIndexClickedSubject: Subject<number>;
+  private listIndexClickedEmitter: Observer<number>;
 
-  private listIndexHoveredSubject: Subject<number>;
+  private listIndexHoveredEmitter: Observer<number>;
 
   private setComponentMatches: (matches: string[]) => void;
 
