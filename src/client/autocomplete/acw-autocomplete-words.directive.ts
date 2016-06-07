@@ -4,6 +4,7 @@ import {
 } from '@angular/core';
 import { Observable, Observer, ReplaySubject, Subject, Subscription } from 'rxjs';
 
+import { AcwMatchesDynamicWrapper } from './acw-matches-dynamic-wrapper';
 import { AcwMatchesComponent } from './acw-matches.component';
 import { AcwInputDriver } from './acw-input-driver';
 import { AcwListDriver } from './acw-list-driver';
@@ -58,8 +59,7 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
     private componentLoader: DynamicComponentLoader,
     private viewContainerRef: ViewContainerRef) {
 
-    this.setComponentMatches = this.noopMatches;
-    this.setComponentIndex = this.noopIndex;
+    this.matchesComponentWrapper = new AcwMatchesDynamicWrapper();
 
     // remember last value for late subscribers
     const completionsSubject = new ReplaySubject<string[]>(1);
@@ -89,7 +89,7 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
 
     this.listDriver.currentIndex$
       .subscribe(currentIndex => {
-        this.setComponentIndex(currentIndex);
+        this.matchesComponentWrapper.index = currentIndex;
       })
       .addTo(this.subscription);
 
@@ -136,52 +136,40 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.componentLoadPromise = this.componentLoader
       .loadNextToLocation(AcwMatchesComponent, this.viewContainerRef)
-      .then(componentRef => {
+      .then((componentRef: ComponentRef<AcwMatchesComponent>) => {
         const newInstanceId = this.makeNewId();
 
         this.hostAriaControls = newInstanceId;
 
-        this.matchesComponent = componentRef.instance;
+        // inform dynamic wrapper with newly loaded component
+        this.matchesComponentWrapper.load(componentRef);
 
-        this.matchesComponent.id = newInstanceId;
-        this.matchesComponent.matches = [];
+        // set initial inputs
+        this.matchesComponentWrapper.id = newInstanceId;
+        this.matchesComponentWrapper.matches = [];
 
-        // update component inputs upon driver outputs changing
-        this.setComponentMatches = matches => {
-          this.matchesComponent.matches = matches;
-        };
-
-        this.setComponentIndex = index => {
-          this.matchesComponent.activeIndex = index;
-        };
-
-        // forward component outputs to driver inputs, using Subject as bypass
-        this.matchesComponent.select
+        // forward component outputs to driver inputs, using intermediate Observers
+        this.matchesComponentWrapper.select
           .subscribe((index: number) => {
             this.listIndexClickedEmitter.next(index);
           })
           .addTo(this.subscription);
 
-        this.matchesComponent.over
+        this.matchesComponentWrapper.over
           .subscribe((index: number) => {
             this.listIndexHoveredEmitter.next(index);
           })
           .addTo(this.subscription);
-
-        return componentRef;
       });
   }
 
   ngOnDestroy(): void {
     if (this.componentLoadPromise) {
-      this.componentLoadPromise.then(componentRef => {
-        this.setComponentMatches = this.noopMatches;
-        this.setComponentIndex = this.noopIndex;
-        this.matchesComponent = void 0;
-        this.componentLoadPromise = void 0;
+      this.componentLoadPromise.then(_ => {
+        this.componentLoadPromise = null;
         this.hostAriaControls = null;
 
-        componentRef.destroy();
+        this.matchesComponentWrapper.unload();
       });
     }
 
@@ -201,12 +189,8 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
   hostAriaControls: string;
 
   private setMatches(matches: string[]) {
-    this.setListDriverMatches(matches);
-    this.setComponentMatches(matches);
-  }
-
-  private setListDriverMatches(matches: string[]) {
     this.matchesEmitter.next(matches);
+    this.matchesComponentWrapper.matches = matches;
   }
 
   private noopMatches(matches: string[]) {
@@ -251,9 +235,9 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
 
   private listDriver: AcwListDriver;
 
-  private componentLoadPromise: Promise<ComponentRef<AcwMatchesComponent>>;
+  private componentLoadPromise: Promise<void>;
 
-  private matchesComponent: AcwMatchesComponent;
+  private matchesComponentWrapper: AcwMatchesDynamicWrapper;
 
   private matchesEmitter: Observer<string[]>;
 
@@ -264,10 +248,6 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
   private listIndexClickedEmitter: Observer<number>;
 
   private listIndexHoveredEmitter: Observer<number>;
-
-  private setComponentMatches: (matches: string[]) => void;
-
-  private setComponentIndex: (index: number) => void;
 
   private noopSearch: SearchFn = _ => Observable.of([]);
 
