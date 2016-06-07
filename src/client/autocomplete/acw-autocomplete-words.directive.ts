@@ -83,7 +83,7 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnInit, OnDestro
 
     this.listDriver.doClose$
       .subscribe(_ => {
-        this.setComponentMatches([]);
+        this.setMatches([]);
       })
       .addTo(this.subscription);
 
