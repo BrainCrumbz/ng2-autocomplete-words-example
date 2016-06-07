@@ -1,5 +1,5 @@
 import {
-  Directive, Input, AfterViewInit, OnInit, OnDestroy,
+  Directive, Input, AfterViewInit, OnDestroy,
   DynamicComponentLoader, ElementRef, ViewContainerRef, ComponentRef
 } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
@@ -20,7 +20,7 @@ type SearchFn = (text: string) => Observable<string[]>;
     '[attr.aria-controls]': 'hostAriaControls',
   },
 })
-export class AcwAutoCompleteDirective implements AfterViewInit, OnInit, OnDestroy {
+export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
 
   @Input() set acwAutocompleteWords(values: string[]) {
     if (!values || !Array.isArray(values)) {
@@ -119,10 +119,6 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnInit, OnDestro
         }
       })
       .addTo(this.subscription);
-  }
-
-  // TODO remove if not needed
-  ngOnInit(): void {
   }
 
   ngAfterViewInit(): void {

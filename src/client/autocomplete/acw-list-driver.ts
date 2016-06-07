@@ -50,11 +50,9 @@ export class AcwListDriver implements Disposable {
       .addTo(this.subscription);
 
     this.currentIndex$ = safeMatches$
-      //.do(value => { console.log('safeMatches'); console.log(value); })
       .map(matches => {
         const length = matches.length;
 
-        //console.log('length: ' + length);
         /*
         if (matches.length <= 1) {
           return Observable.of(0);
@@ -74,8 +72,7 @@ export class AcwListDriver implements Disposable {
           .map(_ => +1);
 
         const arrowKeyIndexChange$ = Observable
-          .merge(arrowUpIndexChange$, arrowDownIndexChange$)/*
-          .do(value => console.log('arrow change: ' + value))*/;
+          .merge(arrowUpIndexChange$, arrowDownIndexChange$);
 
         const arrowKeyIndex$ = arrowKeyIndexChange$
           .scan((acc, change) => {
@@ -84,14 +81,12 @@ export class AcwListDriver implements Disposable {
             return index;
 
           }, initialIndex)
-          //.do(value => console.log('arrow key index: ' + value))
           .startWith(0);
 
         return arrowKeyIndex$;
       })
       .switch()
       .merge(indexChangedByMouse$)
-      //.do(value => console.log('index: ' + value))
       .share();
 
     this.doClose$ = activeKeyUp$
