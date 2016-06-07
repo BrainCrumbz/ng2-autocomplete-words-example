@@ -32,19 +32,13 @@ export class AcwListDriver implements Disposable {
     // when list is visible prevent default actions by keys managed later, during keyup event
     activeKeyDown$
       .filter(isManagedKey)
-      .subscribe(event => {
-        event.preventDefault();
-        event.stopPropagation();
-      })
+      .subscribe(AcwListDriver.stopEvent)
       .addTo(this.subscription);
 
     // when list is visible prevent default actions by keys managed now, during keyup event
     activeKeyUp$
       .filter(isManagedKey)
-      .subscribe(event => {
-        event.preventDefault();
-        event.stopPropagation();
-      })
+      .subscribe(AcwListDriver.stopEvent)
       .addTo(this.subscription);
 
     const indexReset$ = matches$
@@ -102,6 +96,11 @@ export class AcwListDriver implements Disposable {
   selectedMatch$: Observable<string>;
 
   doClose$: Observable<void>;
+
+  private static stopEvent(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+  }
 
   private subscription: Subscription = new Subscription();
 }

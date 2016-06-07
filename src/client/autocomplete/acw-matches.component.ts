@@ -1,5 +1,4 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { Observable, Subscription } from 'rxjs';
 
 import './rx-ext/Subscription/addTo';
 
@@ -52,13 +51,16 @@ export class AcwMatchesComponent {
   onMouseEnterItem(index: number): void {
     this.over.next(index);
 
-    event.preventDefault();
-    event.stopPropagation();
+    this.stopEvent(event);
   }
 
   onSelectItem(event: Event, index: number): void {
     this.select.next(index);
 
+    this.stopEvent(event);
+  }
+
+  private stopEvent(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
   }

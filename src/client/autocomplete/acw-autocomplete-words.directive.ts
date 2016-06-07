@@ -70,8 +70,8 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnInit, OnDestro
       this.matchesSubject.asObservable(),
       this.keyUpSubject.asObservable(),
       this.keyDownSubject.asObservable(),
-      this.listIndexClickedSubject.asObservable(),
-      this.listIndexHoveredSubject.asObservable());
+      this.listIndexHoveredSubject.asObservable(),
+      this.listIndexClickedSubject.asObservable());
 
     this.subscription.add(() => this.listDriver.dispose());
 
