@@ -2,7 +2,7 @@ import {
   Directive, Input, AfterViewInit, OnDestroy,
   DynamicComponentLoader, ElementRef, ViewContainerRef, ComponentRef
 } from '@angular/core';
-import { Observable, Observer, Subject, Subscription } from 'rxjs';
+import { Observable, Observer, ReplaySubject, Subject, Subscription } from 'rxjs';
 
 import { AcwMatchesComponent } from './acw-matches.component';
 import { AcwInputDriver } from './acw-input-driver';
@@ -27,9 +27,10 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
       values = [];
     }
 
-    // TODO turn this into a subject/observable, so to feed it into ListDriver
-    this.completions = values
+    const textValues = values
       .filter(value => typeof value === 'string');
+
+    this.completionsEmitter.next(textValues);
   }
 
   get acwAutocompleteWords(): string[] {
@@ -59,6 +60,11 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
 
     this.setComponentMatches = this.noopMatches;
     this.setComponentIndex = this.noopIndex;
+
+    // remember last value for late subscribers
+    const completionsSubject = new ReplaySubject<string[]>(1);
+    this.completions$ = completionsSubject.asObservable();
+    this.completionsEmitter = completionsSubject;
 
     const matchesSubject = new Subject<string[]>();
     const keyUpSubject = new Subject<KeyboardEvent>();
@@ -96,7 +102,7 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
     const inputDriver = new AcwInputDriver(
       keyUpSubject.asObservable(),
       this.listDriver.selectedMatch$,
-      this.getMatches.bind(this),
+      text => this.getMatches(text),
       {
         debounceMs: this.debounceMs,
         minWordLength: this.minWordLength,
@@ -212,18 +218,18 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
   }
 
   private getMatches(text: string): Observable<string[]> {
-    if (this.completions) {
-      const defaultMatches = AcwAutoCompleteDirective
-        .defaultSearch(this.completions, text);
-
-      return Observable.of(defaultMatches);
-    }
-
     if (this.findMatches) {
       return this.findMatches(text);
     }
 
-    return Observable.of([]);
+    const matches$ = Observable.of(text)
+      .withLatestFrom(this.completions$)
+      .map(tuple => {
+        return AcwAutoCompleteDirective
+          .defaultSearch(tuple[1], tuple[0]);
+      });
+
+    return matches$;
   }
 
   private makeNewId(): string {
@@ -238,7 +244,8 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
     return newId;
   }
 
-  private completions: string[];
+  private completionsEmitter: Subject<string[]>;
+  private completions$: Observable<string[]>;
 
   private findMatches: (text: string) => Observable<string[]>;
 
