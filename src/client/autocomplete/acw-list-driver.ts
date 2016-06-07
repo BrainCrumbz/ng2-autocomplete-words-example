@@ -34,30 +34,25 @@ export class AcwListDriver implements Disposable {
       .filter(tuple => tuple[1])
       .map(tuple => tuple[0]);
 
-    // when list is visible prevent default actions by keys managed later, during keyup event
-    activeKeyDown$
+    // when list is visible, prevent default actions to keys custom managed
+    Observable
+      .merge(activeKeyDown$, activeKeyUp$)
       .filter(isManagedKey)
       .subscribe(AcwListDriver.stopEvent)
       .addTo(this.subscription);
 
-    // make sure not to use this by mistake instead of keyup version
+    // make sure not to use keydown version by mistake, instead of keyup version
     activeKeyDown$ = null;
-
-    // when list is visible prevent default actions by keys managed now, during keyup event
-    activeKeyUp$
-      .filter(isManagedKey)
-      .subscribe(AcwListDriver.stopEvent)
-      .addTo(this.subscription);
 
     this.currentIndex$ = safeMatches$
       .map(matches => {
         const length = matches.length;
 
-        /*
+        // when list is empty or only with one item, index can only be 0
         if (matches.length <= 1) {
           return Observable.of(0);
         }
-        */
+
         const initialIndex = 0;
 
         // it does not work if using active keyup events, and
