@@ -1,7 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 
-import './rx-ext/Subscription/addTo';
-
 @Component({
   selector: 'acw-matches',
   host: {

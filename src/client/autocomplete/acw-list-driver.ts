@@ -4,6 +4,7 @@ import {
   isManagedKey, isAcceptSelectionKey, isClosingKey,
   isArrowUpKey, isArrowDownKey, Disposable, limitPositive
 } from './acw-utils';
+import './rx-ext/Subscription/addTo';
 
 export class AcwListDriver implements Disposable {
   constructor(

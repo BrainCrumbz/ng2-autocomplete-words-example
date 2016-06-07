@@ -1,8 +1,9 @@
 import { ComponentRef } from '@angular/core';
-
-import { Observable } from 'rxjs';
+import { Observable, Observer, Subject, Subscription } from 'rxjs';
 
 import { AcwMatchesComponent } from './acw-matches.component';
+import { Disposable } from './acw-utils';
+import './rx-ext/Subscription/addTo';
 
 interface AcwMatchesHolder {
   setId (id: string): void;
@@ -16,10 +17,28 @@ interface AcwMatchesHolder {
   getOverObservable(): Observable<number>;
 }
 
-export class AcwMatchesDynamicWrapper {
+export class AcwMatchesDynamicWrapper implements Disposable {
   constructor() {
+    const selectSubject = new Subject<number>();
+    this.select$ = selectSubject.asObservable();
+    this.selectEmitter = selectSubject;
+
+    const overSubject = new Subject<number>();
+    this.over$ = overSubject.asObservable();
+    this.overEmitter = overSubject;
+
     // by default, start with an empty holder
     this.holder = new AcwMatchesEmptyHolder();
+  }
+
+  dispose(): void {
+    if (this.componentRef) {
+      this.componentRef.destroy();
+      this.componentRef = null;
+      this.holder = null;
+    }
+
+    this.subscription.unsubscribe();
   }
 
   set id(id: string) {
@@ -35,30 +54,54 @@ export class AcwMatchesDynamicWrapper {
   }
 
   get select(): Observable<number> {
-    return this.holder.getSelectObservable();
+    return this.select$;
   }
 
   get over(): Observable<number> {
-    return this.holder.getOverObservable();
+    return this.over$;
   }
 
   load(componentRef: ComponentRef<AcwMatchesComponent>): void {
     const instance: AcwMatchesComponent = componentRef.instance;
 
     this.holder = new AcwMatchesFullHolder(instance);
+
+    this.subscribeNewHolder();
   }
 
   unload(): void {
-    if (this.componentRef) {
-      this.componentRef.destroy();
-      this.componentRef = null;
-    }
+    this.dispose();
 
     this.holder = new AcwMatchesEmptyHolder();
+
+    this.subscribeNewHolder();
   }
 
-  componentRef: ComponentRef<AcwMatchesComponent>;
-  holder: AcwMatchesHolder;
+  private subscribeNewHolder(): void {
+    // unsubscribe previous
+    // NOTE: assume that subscriptions are _all and only_ bound to held component
+    this.subscription.unsubscribe();
+
+    // subscribe new
+    this.holder.getSelectObservable()
+      .subscribe(value => this.selectEmitter.next(value))
+      .addTo(this.subscription);
+
+    this.holder.getOverObservable()
+      .subscribe(value => this.overEmitter.next(value))
+      .addTo(this.subscription);
+  }
+
+  private componentRef: ComponentRef<AcwMatchesComponent>;
+  private holder: AcwMatchesHolder;
+
+  private selectEmitter: Observer<number>;
+  private select$: Observable<number>;
+
+  private overEmitter: Observer<number>;
+  private over$: Observable<number>;
+
+  private subscription: Subscription = new Subscription();
 }
 
 class AcwMatchesFullHolder implements AcwMatchesHolder {
