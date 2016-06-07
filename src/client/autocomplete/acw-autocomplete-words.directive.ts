@@ -59,7 +59,10 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
     private componentLoader: DynamicComponentLoader,
     private viewContainerRef: ViewContainerRef) {
 
+    // TODO cancel completion when neither input nor list is focused
+
     this.matchesComponentWrapper = new AcwMatchesDynamicWrapper();
+    this.shouldUnsubscribeFromWrapper = false;
 
     // remember last value for late subscribers
     const completionsSubject = new ReplaySubject<string[]>(1);
@@ -137,6 +140,11 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
     this.componentLoadPromise = this.componentLoader
       .loadNextToLocation(AcwMatchesComponent, this.viewContainerRef)
       .then((componentRef: ComponentRef<AcwMatchesComponent>) => {
+        if (this.shouldUnsubscribeFromWrapper) {
+          throw new Error(
+            'Cannot load another instance, previous one should be unsubscribed first.');
+        }
+
         const newInstanceId = this.makeNewId();
 
         this.hostAriaControls = newInstanceId;
@@ -160,6 +168,11 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
             this.listIndexHoveredEmitter.next(index);
           })
           .addTo(this.subscription);
+
+        // NOTE: those subscriptions should be unsubscribed before loading again
+        // another instance, but this does not happen at the moment. They are
+        // unsubscribed with all the others during directive destruction.
+        this.shouldUnsubscribeFromWrapper = true;
       });
   }
 
@@ -174,6 +187,7 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
     }
 
     this.subscription.unsubscribe();
+    this.shouldUnsubscribeFromWrapper = false;
   }
 
   // Bound to view
@@ -191,14 +205,6 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
   private setMatches(matches: string[]) {
     this.matchesEmitter.next(matches);
     this.matchesComponentWrapper.matches = matches;
-  }
-
-  private noopMatches(matches: string[]) {
-    // do nothing
-  }
-
-  private noopIndex(index: number) {
-    // do nothing
   }
 
   private getMatches(text: string): Observable<string[]> {
@@ -238,6 +244,8 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
   private componentLoadPromise: Promise<void>;
 
   private matchesComponentWrapper: AcwMatchesDynamicWrapper;
+
+  private shouldUnsubscribeFromWrapper: boolean;
 
   private matchesEmitter: Observer<string[]>;
 

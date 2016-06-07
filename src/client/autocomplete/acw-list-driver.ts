@@ -13,8 +13,6 @@ export class AcwListDriver implements Disposable {
     indexChangedByMouse$: Observable<number>,
     indexSelectedByClick$: Observable<number>) {
 
-    // TODO cancel completion on lost focus (maybe this in parent directive)
-
     const safeMatches$ = matches$
       .startWith([]);
 
