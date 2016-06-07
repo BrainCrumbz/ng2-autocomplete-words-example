@@ -17,6 +17,7 @@ type SearchFn = (text: string) => Observable<string[]>;
   host: {
     '(keyup)': 'onKeyUp($event)',
     '(keydown)': 'onKeyDown($event)',
+    '(blur)': 'onBlur($event)',
     'aria-haspopup': 'true',
     '[attr.aria-controls]': 'hostAriaControls',
   },
@@ -59,8 +60,6 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
     private componentLoader: DynamicComponentLoader,
     private viewContainerRef: ViewContainerRef) {
 
-    // TODO cancel completion when neither input nor list is focused
-
     this.matchesComponentWrapper = new AcwMatchesDynamicWrapper();
     this.shouldUnsubscribeFromWrapper = false;
 
@@ -72,13 +71,16 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
     const matchesSubject = new Subject<string[]>();
     const keyUpSubject = new Subject<KeyboardEvent>();
     const keyDownSubject = new Subject<KeyboardEvent>();
+    const blurSubject = new Subject<FocusEvent>();
     const listIndexClickedSubject = new Subject<number>();
     const listIndexHoveredSubject = new Subject<number>();
 
     this.matchesEmitter = matchesSubject;
     this.keyUpEmitter = keyUpSubject;
     this.keyDownEmitter = keyDownSubject;
+    this.blurEmitter = blurSubject;
     this.listIndexClickedEmitter = listIndexClickedSubject;
+    this.listIndexClicked$ = listIndexClickedSubject.asObservable();
     this.listIndexHoveredEmitter = listIndexHoveredSubject;
 
     this.listDriver = new AcwListDriver(
@@ -96,7 +98,20 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
       })
       .addTo(this.subscription);
 
+    const blurTimeout$ = Observable.timer(this.focusLostTimeoutMs);
+
+    // detect when whole component loses focus, that is, when
+    // input loses focus and not because of mouse click in list
+    const lostFocus$ = blurSubject.asObservable()
+      .mergeMap(_ => {
+        return blurTimeout$
+          .takeUntil(this.listIndexClicked$)
+          .map(_ => null as void);
+      });
+
+    // cancel completion when whole component loses focus as well
     this.listDriver.doClose$
+      .merge(lostFocus$)
       .subscribe(_ => {
         this.setMatches([]);
       })
@@ -200,6 +215,10 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
     this.keyDownEmitter.next(event);
   }
 
+  onBlur(event: FocusEvent): void {
+    this.blurEmitter.next(event);
+  }
+
   hostAriaControls: string;
 
   private setMatches(matches: string[]) {
@@ -234,34 +253,30 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
     return newId;
   }
 
-  private completionsEmitter: Subject<string[]>;
+  private completionsEmitter: Observer<string[]>;
   private completions$: Observable<string[]>;
 
   private findMatches: (text: string) => Observable<string[]>;
+  private noopSearch: SearchFn = _ => Observable.of([]);
 
   private listDriver: AcwListDriver;
 
   private componentLoadPromise: Promise<void>;
-
   private matchesComponentWrapper: AcwMatchesDynamicWrapper;
-
   private shouldUnsubscribeFromWrapper: boolean;
 
   private matchesEmitter: Observer<string[]>;
-
   private keyUpEmitter: Observer<KeyboardEvent>;
-
   private keyDownEmitter: Observer<KeyboardEvent>;
-
+  private blurEmitter: Observer<FocusEvent>;
   private listIndexClickedEmitter: Observer<number>;
-
+  private listIndexClicked$: Observable<number>;
   private listIndexHoveredEmitter: Observer<number>;
-
-  private noopSearch: SearchFn = _ => Observable.of([]);
 
   private subscription: Subscription = new Subscription();
 
   private idPrefix = 'acw-matches-';
+  private focusLostTimeoutMs = 200;
 
   private static counter: number = 0;
 
