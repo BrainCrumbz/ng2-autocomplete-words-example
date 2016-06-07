@@ -158,13 +158,13 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
 
         // forward component outputs to driver inputs, using intermediate Observers
         this.matchesComponentWrapper.select
-          .subscribe((index: number) => {
+          .subscribe(index => {
             this.listIndexClickedEmitter.next(index);
           })
           .addTo(this.subscription);
 
         this.matchesComponentWrapper.over
-          .subscribe((index: number) => {
+          .subscribe(index => {
             this.listIndexHoveredEmitter.next(index);
           })
           .addTo(this.subscription);
