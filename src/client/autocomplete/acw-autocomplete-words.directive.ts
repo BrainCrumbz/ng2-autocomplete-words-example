@@ -213,7 +213,10 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
 
   private getMatches(text: string): Observable<string[]> {
     if (this.completions) {
-      return AcwAutoCompleteDirective.findLowerCaseMatches(this.completions, text);
+      const defaultMatches = AcwAutoCompleteDirective
+        .defaultSearch(this.completions, text);
+
+      return Observable.of(defaultMatches);
     }
 
     if (this.findMatches) {
@@ -267,14 +270,17 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
 
   private static counter: number = 0;
 
-  private static findLowerCaseMatches(
-    completions: string[], text: string): Observable<string[]> {
+  private static defaultSearch(
+    completions: string[], text: string): string[] {
+
+    // performs a case insensitive search,
+    // looking for items starting with given text
 
     const lowerCaseText = text.toLocaleLowerCase();
 
     const matchingCompletions = completions
       .filter(completion => completion.toLocaleLowerCase().startsWith(lowerCaseText));
 
-    return Observable.of(matchingCompletions);
+    return matchingCompletions;
   }
 }
