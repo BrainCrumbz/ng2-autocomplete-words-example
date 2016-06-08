@@ -11,6 +11,7 @@ export class AcwListDriver implements Disposable {
     matches$: Observable<string[]>,
     keyUp$: Observable<KeyboardEvent>,
     keyDown$: Observable<KeyboardEvent>,
+    blur$: Observable<FocusEvent>,
     indexChangedByMouse$: Observable<number>,
     indexSelectedByClick$: Observable<number>) {
 
@@ -83,8 +84,20 @@ export class AcwListDriver implements Disposable {
       .merge(indexChangedByMouse$)
       .share();
 
+    const blurTimeout$ = Observable.timer(AcwListDriver.focusLostTimeoutMs);
+
+    // detect when whole component loses focus, that is, when
+    // input loses focus and not because of mouse click in list
+    const lostFocus$ = blur$
+      .mergeMap(_ => {
+        return blurTimeout$
+          .takeUntil(indexSelectedByClick$)
+          .map(_ => null as void);
+      });
+
     this.doClose$ = activeKeyUp$
       .filter(isClosingKey)
+      .merge(lostFocus$)
       .map(_ => null as void);
 
     const selectByKey$ = activeKeyUp$
@@ -114,10 +127,12 @@ export class AcwListDriver implements Disposable {
 
   doClose$: Observable<void>;
 
+  private subscription: Subscription = new Subscription();
+
+  private static focusLostTimeoutMs = 200;
+
   private static stopEvent(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
   }
-
-  private subscription: Subscription = new Subscription();
 }

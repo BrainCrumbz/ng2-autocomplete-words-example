@@ -73,18 +73,19 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
     let keyDown$: Observable<KeyboardEvent>;
     let blur$: Observable<FocusEvent>;
     let listIndexHovered$: Observable<number>;
+    let listIndexClicked$: Observable<number>;
 
     [this.matchesEmitter, matches$] = splitSubject<string[]>();
     [this.keyUpEmitter, keyUp$] = splitSubject<KeyboardEvent>();
     [this.keyDownEmitter, keyDown$] = splitSubject<KeyboardEvent>();
     [this.blurEmitter, blur$] = splitSubject<FocusEvent>();
     [this.listIndexHoveredEmitter, listIndexHovered$] = splitSubject<number>();
-    [this.listIndexClickedEmitter, this.listIndexClicked$] = splitSubject<number>();
+    [this.listIndexClickedEmitter, listIndexClicked$] = splitSubject<number>();
 
     this.listDriver = new AcwListDriver(
       matches$,
-      keyUp$, keyDown$,
-      listIndexHovered$, this.listIndexClicked$);
+      keyUp$, keyDown$, blur$,
+      listIndexHovered$, listIndexClicked$);
 
     this.subscription.add(() => this.listDriver.dispose());
 
@@ -94,20 +95,8 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
       })
       .addTo(this.subscription);
 
-    const blurTimeout$ = Observable.timer(this.focusLostTimeoutMs);
-
-    // detect when whole component loses focus, that is, when
-    // input loses focus and not because of mouse click in list
-    const lostFocus$ = blur$
-      .mergeMap(_ => {
-        return blurTimeout$
-          .takeUntil(this.listIndexClicked$)
-          .map(_ => null as void);
-      });
-
     // cancel completion when whole component loses focus as well
     this.listDriver.doClose$
-      .merge(lostFocus$)
       .subscribe(_ => {
         this.setMatches([]);
       })
@@ -266,13 +255,11 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
   private keyDownEmitter: Observer<KeyboardEvent>;
   private blurEmitter: Observer<FocusEvent>;
   private listIndexClickedEmitter: Observer<number>;
-  private listIndexClicked$: Observable<number>;
   private listIndexHoveredEmitter: Observer<number>;
 
   private subscription: Subscription = new Subscription();
 
   private idPrefix = 'acw-matches-';
-  private focusLostTimeoutMs = 200;
 
   private static counter: number = 0;
 
