@@ -1,4 +1,4 @@
-import { Observable, Subject, Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 
 import {
   isManagedKey, isAcceptSelectionKey, isClosingKey,

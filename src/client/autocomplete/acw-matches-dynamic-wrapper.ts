@@ -1,5 +1,5 @@
 import { ComponentRef } from '@angular/core';
-import { Observable, Observer, Subject } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { AcwMatchesComponent } from './acw-matches.component';
 import { Disposable } from './acw-utils';

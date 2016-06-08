@@ -8,6 +8,7 @@ import { AcwMatchesDynamicWrapper } from './acw-matches-dynamic-wrapper';
 import { AcwMatchesComponent } from './acw-matches.component';
 import { AcwInputDriver } from './acw-input-driver';
 import { AcwListDriver } from './acw-list-driver';
+import { splitSubject } from './rx-ext/rx-utils';
 import './rx-ext/Subscription/addTo';
 
 type SearchFn = (text: string) => Observable<string[]>;
@@ -64,31 +65,26 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
     this.shouldUnsubscribeFromWrapper = false;
 
     // remember last value for late subscribers
-    const completionsSubject = new ReplaySubject<string[]>(1);
-    this.completions$ = completionsSubject.asObservable();
-    this.completionsEmitter = completionsSubject;
+    [this.completionsEmitter, this.completions$] =
+      splitSubject(new ReplaySubject<string[]>(1));
 
-    const matchesSubject = new Subject<string[]>();
-    const keyUpSubject = new Subject<KeyboardEvent>();
-    const keyDownSubject = new Subject<KeyboardEvent>();
-    const blurSubject = new Subject<FocusEvent>();
-    const listIndexClickedSubject = new Subject<number>();
-    const listIndexHoveredSubject = new Subject<number>();
+    let matches$: Observable<string[]>;
+    let keyUp$: Observable<KeyboardEvent>;
+    let keyDown$: Observable<KeyboardEvent>;
+    let blur$: Observable<FocusEvent>;
+    let listIndexHovered$: Observable<number>;
 
-    this.matchesEmitter = matchesSubject;
-    this.keyUpEmitter = keyUpSubject;
-    this.keyDownEmitter = keyDownSubject;
-    this.blurEmitter = blurSubject;
-    this.listIndexClickedEmitter = listIndexClickedSubject;
-    this.listIndexClicked$ = listIndexClickedSubject.asObservable();
-    this.listIndexHoveredEmitter = listIndexHoveredSubject;
+    [this.matchesEmitter, matches$] = splitSubject<string[]>();
+    [this.keyUpEmitter, keyUp$] = splitSubject<KeyboardEvent>();
+    [this.keyDownEmitter, keyDown$] = splitSubject<KeyboardEvent>();
+    [this.blurEmitter, blur$] = splitSubject<FocusEvent>();
+    [this.listIndexHoveredEmitter, listIndexHovered$] = splitSubject<number>();
+    [this.listIndexClickedEmitter, this.listIndexClicked$] = splitSubject<number>();
 
     this.listDriver = new AcwListDriver(
-      matchesSubject.asObservable(),
-      keyUpSubject.asObservable(),
-      keyDownSubject.asObservable(),
-      listIndexHoveredSubject.asObservable(),
-      listIndexClickedSubject.asObservable());
+      matches$,
+      keyUp$, keyDown$,
+      listIndexHovered$, this.listIndexClicked$);
 
     this.subscription.add(() => this.listDriver.dispose());
 
@@ -102,7 +98,7 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
 
     // detect when whole component loses focus, that is, when
     // input loses focus and not because of mouse click in list
-    const lostFocus$ = blurSubject.asObservable()
+    const lostFocus$ = blur$
       .mergeMap(_ => {
         return blurTimeout$
           .takeUntil(this.listIndexClicked$)
@@ -118,7 +114,7 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
       .addTo(this.subscription);
 
     const inputDriver = new AcwInputDriver(
-      keyUpSubject.asObservable(),
+      keyUp$,
       this.listDriver.selectedMatch$,
       text => this.getMatches(text),
       {
