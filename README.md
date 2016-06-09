@@ -15,7 +15,7 @@ Clone or download this repository:
 
 ~~~bash
 git clone --depth 1 https://github.com/BrainCrumbz/ng2-autocomplete-words-example.git
-cd YANGTSE
+cd ng2-autocomplete-words-example
 ~~~
 
 Install dependencies:
