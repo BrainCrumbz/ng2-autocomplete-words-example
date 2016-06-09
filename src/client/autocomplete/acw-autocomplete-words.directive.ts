@@ -19,6 +19,7 @@ type SearchFn = (text: string) => Observable<string[]>;
     '(keyup)': 'onKeyUp($event)',
     '(keydown)': 'onKeyDown($event)',
     '(blur)': 'onBlur($event)',
+    'autocomplete': 'off',
     'aria-haspopup': 'true',
     '[attr.aria-controls]': 'hostAriaControls',
   },
@@ -94,6 +95,8 @@ export class AcwAutoCompleteDirective implements AfterViewInit, OnDestroy {
         this.matchesComponentWrapper.index = currentIndex;
       })
       .addTo(this.subscription);
+
+    // TODO consider moving setMatches to an observer/able
 
     // cancel completion when whole component loses focus as well
     this.listDriver.doClose$

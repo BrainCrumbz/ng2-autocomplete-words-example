@@ -45,7 +45,7 @@ export class AcwListDriver implements Disposable {
     activeKeyDown$ = null;
 
     this.currentIndex$ = safeMatches$
-      .map(matches => {
+      .switchMap(matches => {
         const length = matches.length;
 
         // when list is empty or only with one item, index can only be 0
@@ -80,7 +80,6 @@ export class AcwListDriver implements Disposable {
 
         return arrowKeyIndex$;
       })
-      .switch()
       .merge(indexChangedByMouse$)
       .share();
 
