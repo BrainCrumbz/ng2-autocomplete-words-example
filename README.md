@@ -9,6 +9,27 @@ Work in progress ... Start tinkering with it now and come back later for more do
 * For example usage, look at `./src/client/app/app.component.ts`
 * For component implementation internals, look in `./src/client/autocomplete/...`
 
+## Quick start
+
+Clone or download this repository:
+
+~~~bash
+git clone --depth 1 https://github.com/BrainCrumbz/ng2-autocomplete-words-example.git
+cd YANGTSE
+~~~
+
+Install dependencies:
+
+~~~bash
+npm install
+~~~
+
+Serve application in development, with build watching enabled:
+
+~~~bash
+npm run serve-watch
+~~~
+
 ## License
 
 [MIT](LICENSE)
