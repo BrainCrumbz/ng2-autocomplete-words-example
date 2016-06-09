@@ -18,7 +18,7 @@ export class AcwInputDriver {
       .debounceTime(opts.debounceMs)
       .filter(event => isTyping(event.keyCode))
       .map(event => {
-        const { value: fullText, selectionStart } = (event.srcElement as HTMLInputElement);
+        const { value: fullText, selectionStart } = (event.target as HTMLInputElement);
 
         const wordResults: TextRun[] = findCurrentWord(fullText, selectionStart);
 
