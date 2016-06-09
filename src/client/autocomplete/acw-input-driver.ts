@@ -39,13 +39,12 @@ export class AcwInputDriver {
       .map(_ => emptyMatches);
 
     const matchingCompletions$ = longEnoughWord$
-      .map(wordResult => {
+      .switchMap(wordResult => {
         const matches$ = getMatches(wordResult.text)
           .catch(_ => Observable.of([] as string[]));
 
         return matches$;
-      })
-      .switch();
+      });
 
     this.matches$ = matchingCompletions$
       .merge(notSuitableWord$);
