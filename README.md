@@ -30,7 +30,7 @@ Serve application in development, with build watching enabled:
 npm run serve-watch
 ~~~
 
-Browse to `http://localhost:8081/`.
+Browse to http://localhost:8081/.
 
 ## License
 
