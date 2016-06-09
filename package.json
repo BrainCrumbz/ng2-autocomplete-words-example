@@ -19,10 +19,7 @@
     "serve-dev": "parallelshell \"node src/server/server.js\" \"set DEV_MODE=reload&&webpack-dev-server --config ./webpack.config.dev.js\" ",
     "serve-watch": "parallelshell \"node src/server/server.js\" \"npm run build-watch\" ",
     "serve-prod": "set NODE_ENV=production&& node src/server/server.js",
-    "preserve-prod": "npm run build-prod",
-    "test": "karma start",
-    "test-debug": "set TEST_MODE=debug&&karma start",
-    "test-watch": "set TEST_MODE=watch&&karma start"
+    "preserve-prod": "npm run build-prod"
   },
   "keywords": [
     "angular2",
@@ -67,16 +64,6 @@
     "autoprefixer": "^6.3.6",
     "copy-webpack-plugin": "^1.1.1",
     "css-loader": "^0.23.1",
-    "istanbul-instrumenter-loader": "^0.2.0",
-    "jasmine-core": "~2.4.1",
-    "karma": "^0.13.22",
-    "karma-chrome-launcher": "^0.2.3",
-    "karma-coverage": "^0.5.3",
-    "karma-jasmine": "^0.3.8",
-    "karma-jasmine-html-reporter": "^0.2.0",
-    "karma-mocha-reporter": "^1.2.1",
-    "karma-sourcemap-loader": "^0.3.7",
-    "karma-webpack": "^1.7.0",
     "parallelshell": "^2.0.0",
     "postcss-loader": "^0.9.1",
     "raw-loader": "^0.5.1",
